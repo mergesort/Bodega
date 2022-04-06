@@ -16,7 +16,6 @@ final class DiskStorageTests: XCTestCase {
 
     func testWriteDataSucceeds() async throws {
         try await storage.write(Self.testData, key: Self.testCacheKey)
-
         let readData = await storage.read(key: Self.testCacheKey)
 
         XCTAssertEqual(readData, Self.testData)
@@ -26,12 +25,22 @@ final class DiskStorageTests: XCTestCase {
         try await storage.write(updatedTestData, key: Self.testCacheKey)
         let updatedData = await storage.read(key: Self.testCacheKey)
 
-        XCTAssertEqual(updatedData, updatedTestData)
+        XCTAssertNotEqual(readData, updatedData)
     }
 
     func testReadingMissingData() async throws {
         let readData = await storage.read(key: "fake-key")
         XCTAssertNil(readData)
+    }
+
+    func testSubdirectoryResolves() async throws {
+        try await storage.write(Self.testData, key: Self.testCacheKey, subdirectory: "test-subdirectory")
+        let readData = await storage.read(key: Self.testCacheKey, subdirectory: "test-subdirectory")
+
+        XCTAssertEqual(readData, Self.testData)
+
+        let incorrectSubdirectoryData = await storage.read(key: Self.testCacheKey, subdirectory: "fake-subdirectory")
+        XCTAssertNil(incorrectSubdirectoryData)
     }
 
     func testRemoveDataSucceeds() async throws {
@@ -58,7 +67,7 @@ final class DiskStorageTests: XCTestCase {
             return
         }
 
-        XCTFail("Removing from non-existent key failed to produce an error")
+        XCTFail("Removing from non-existent key failed to produce an error as was expected")
     }
 
     func testKeyCount() async throws {
@@ -85,53 +94,17 @@ final class DiskStorageTests: XCTestCase {
         XCTAssertEqual(allKeys.count, 10)
     }
 
-    func testCacheKeyExpressibleByStringLiteral() {
-        let literalCacheKey: CacheKey = "cache-key"
-        let cacheKey = CacheKey("cache-key")
-
-        XCTAssertEqual(cacheKey.value, literalCacheKey.value)
-        XCTAssertEqual(cacheKey.value, "cache-key")
-    }
-
-    func testCacheKeyURLHashing() {
-        let redPandaClubHash = "37E97C2D-25C0-19AE-755D-FC39211AEE32"
-        let url = URL(string: "https://www.redpanda.club")!
-        let cacheKey = CacheKey(url: url)
-
-        XCTAssertEqual(cacheKey.value, redPandaClubHash)
-
-        let dummyHash = "XXXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXXXX"
-        XCTAssertNotEqual(cacheKey.value, dummyHash)
-    }
-
-    func testMD5Hash() {
-        let md5123 = "123".md5
-        let md5ABC = "abc".md5
-
-        XCTAssertEqual(md5ABC, "900150983cd24fb0d6963f7d28e17f72")
-        XCTAssertEqual(md5123, "202cb962ac59075b964b07152d234b70")
-    }
-
-    func testUUIDFormatting() {
-        let preformattedUUIDString = "37E97C2D25C019AE755DFC39211AEE32".uuidFormatted
-
-        XCTAssertEqual(preformattedUUIDString, "37E97C2D-25C0-19AE-755D-FC39211AEE32")
-        XCTAssertNotEqual(preformattedUUIDString, "37E97C2D25C019AE755DFC39211AEE32")
-    }
-
 }
 
 private extension DiskStorageTests {
 
     static let testData = Data("Test".utf8)
-    static let testKeyString = "test-key"
-    static let testCacheKey = CacheKey(stringLiteral: DiskStorageTests.testKeyString)
+    static let testCacheKey: CacheKey = "test-key"
     static let testStoragePath = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask).first!
 
     func writeCacheKeys(count: Int) async throws {
         for i in 0..<count {
             try await storage.write(Self.testData, key: CacheKey("\(i)"))
-            print(i)
         }
     }
 
