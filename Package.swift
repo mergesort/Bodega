@@ -6,8 +6,8 @@ import PackageDescription
 let package = Package(
     name: "Bodega",
     platforms: [
-        .iOS(.v15),
-        .macOS(.v12),
+        .iOS(.v13),
+        .macOS(.v11),
     ],
     products: [
         .library(
