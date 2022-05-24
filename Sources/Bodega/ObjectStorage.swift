@@ -17,7 +17,7 @@ public actor ObjectStorage {
     ///   - object: The object being stored to disk.
     ///   - key: key A `CacheKey` for matching Data to a location on disk.
     ///   - subdirectory: An optional subdirectory the caller can write to.
-    public func store<Object: Codable>(_ object: Object, forKey key: CacheKey, subdirectory: String = "") async throws {
+    public func store<Object: Codable>(_ object: Object, forKey key: CacheKey, subdirectory: String? = nil) async throws {
         let data = try JSONEncoder().encode(object)
 
         return try await storage.write(data, key: key, subdirectory: subdirectory)
@@ -28,7 +28,7 @@ public actor ObjectStorage {
     ///   - key: A `CacheKey` for matching Data to a location on disk.
     ///   - subdirectory: An optional subdirectory the caller can read from.
     /// - Returns: The an object stored on disk if it exists, nil if there is no data stored behind the `CacheKey`.
-    public func object<Object: Codable>(forKey key: CacheKey, subdirectory: String = "") async -> Object? {
+    public func object<Object: Codable>(forKey key: CacheKey, subdirectory: String? = nil) async -> Object? {
         guard let data = await storage.read(key: key, subdirectory: subdirectory) else { return nil }
 
         return try? JSONDecoder().decode(Object.self, from: data)
@@ -38,21 +38,21 @@ public actor ObjectStorage {
     /// - Parameters:
     ///   - key: A `CacheKey` for matching Data to a location on disk.
     ///   - subdirectory: An optional subdirectory the caller can remove a file from.
-    public func removeObject(forKey key: CacheKey, subdirectory: String = "") async throws {
+    public func removeObject(forKey key: CacheKey, subdirectory: String? = nil) async throws {
         try await storage.remove(key: key, subdirectory: subdirectory)
     }
 
     /// Iterates through a directory to find all of the files and their respective keys.
     /// - Parameter subdirectory: An optional subdirectory the caller can navigate for iteration.
     /// - Returns: An array of the keys contained in a directory.
-    public func allKeys(inSubdirectory subdirectory: String = "") async -> [CacheKey] {
+    public func allKeys(inSubdirectory subdirectory: String? = nil) async -> [CacheKey] {
         return await storage.allKeys(subdirectory: subdirectory)
     }
 
     /// Iterates through a directory to find the total number of files.
     /// - Parameter subdirectory: An optional subdirectory the caller can navigate for iteration.
     /// - Returns: The file/key count.
-    public func keyCount(inSubdirectory subdirectory: String = "") async -> Int {
+    public func keyCount(inSubdirectory subdirectory: String? = nil) async -> Int {
         return await storage.keyCount(inSubdirectory: subdirectory)
     }
 

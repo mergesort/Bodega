@@ -16,7 +16,7 @@ public actor DiskStorage {
     ///   - data: The data being stored to disk.
     ///   - key: A `CacheKey` for matching Data to a location on disk.
     ///   - subdirectory: An optional subdirectory the caller can write to.
-    public func write(_ data: Data, key: CacheKey, subdirectory: String = "") throws {
+    public func write(_ data: Data, key: CacheKey, subdirectory: String? = nil) throws {
         let fileURL = self.concatenatedPath(key: key.value, subdirectory: subdirectory)
         let folderURL = fileURL.deletingLastPathComponent()
 
@@ -32,7 +32,7 @@ public actor DiskStorage {
     ///   - key: A `CacheKey` for matching Data to a location on disk.
     ///   - subdirectory: An optional subdirectory the caller can read from.
     /// - Returns: The data stored on disk if it exists, nil if there is no data stored behind the `CacheKey`.
-    public func read(key: CacheKey, subdirectory: String = "") -> Data? {
+    public func read(key: CacheKey, subdirectory: String? = nil) -> Data? {
         return try? Data(contentsOf: self.concatenatedPath(key: key.value, subdirectory: subdirectory))
     }
 
@@ -40,15 +40,23 @@ public actor DiskStorage {
     /// - Parameters:
     ///   - key: A `CacheKey` for matching Data to a location on disk.
     ///   - subdirectory: An optional subdirectory the caller can remove a file from.
-    public func remove(key: CacheKey, subdirectory: String = "") throws {
+    public func remove(key: CacheKey, subdirectory: String? = nil) throws {
         try FileManager.default.removeItem(at: self.concatenatedPath(key: key.value, subdirectory: subdirectory))
     }
 
     /// Iterates through a directory to find all of the files and their respective keys.
     /// - Parameter subdirectory: An optional subdirectory the caller can navigate for iteration.
     /// - Returns: An array of the keys contained in a directory.
-    public func allKeys(subdirectory: String = "") -> [CacheKey] {
-        guard let keys = try? FileManager.default.contentsOfDirectory(atPath: folder.appendingPathComponent(subdirectory).path) else { return [] }
+    public func allKeys(subdirectory: String? = nil) -> [CacheKey] {
+        let directory: URL
+
+        if let subdirectory = subdirectory {
+            directory = folder.appendingPathComponent(subdirectory)
+        } else {
+            directory = folder
+        }
+
+        guard let keys = try? FileManager.default.contentsOfDirectory(atPath: directory.path) else { return [] }
 
         return keys.map({ CacheKey.init($0) })
     }
@@ -56,7 +64,7 @@ public actor DiskStorage {
     /// Iterates through a directory to find the total number of files.
     /// - Parameter subdirectory: An optional subdirectory the caller can navigate for iteration.
     /// - Returns: The file/key count.
-    public func keyCount(inSubdirectory subdirectory: String = "") -> Int {
+    public func keyCount(inSubdirectory subdirectory: String? = nil) -> Int {
         return self.allKeys(subdirectory: subdirectory).count
     }
 
@@ -79,8 +87,12 @@ private extension DiskStorage {
         return FileManager.default.fileExists(atPath: url.path, isDirectory: &isDirectory)
     }
 
-    func concatenatedPath(key: String, subdirectory: String) -> URL {
-        self.folder.appendingPathComponent(subdirectory).appendingPathComponent(key)
+    func concatenatedPath(key: String, subdirectory: String?) -> URL {
+        if let subdirectory = subdirectory {
+            return self.folder.appendingPathComponent(subdirectory).appendingPathComponent(key)
+        } else {
+            return self.folder.appendingPathComponent(key)
+        }
     }
 
 }
