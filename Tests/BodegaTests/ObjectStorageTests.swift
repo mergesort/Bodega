@@ -29,7 +29,7 @@ final class ObjectStorageTests: XCTestCase {
         XCTAssertNotEqual(readObject, updatedObject)
     }
 
-    func testReadingMissingObjecg() async throws {
+    func testReadingMissingObject() async throws {
         let readObject: CodableObject? = await storage.object(forKey: Self.testCacheKey)
         XCTAssertNil(readObject)
     }
