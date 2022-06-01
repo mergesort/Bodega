@@ -42,6 +42,12 @@ public actor ObjectStorage {
         try await storage.remove(key: key, subdirectory: subdirectory)
     }
 
+    /// Removes all the objects located at the `storagePath` or it's `subdirectory`.
+    /// - Parameter subdirectory: An optional subdirectory the caller can remove a file from.
+    public func removeAllObjects(subdirectory: String? = nil) async throws {
+        try await storage.removeAllData(subdirectory: subdirectory)
+    }
+
     /// Iterates through a directory to find all of the files and their respective keys.
     /// - Parameter subdirectory: An optional subdirectory the caller can navigate for iteration.
     /// - Returns: An array of the keys contained in a directory.

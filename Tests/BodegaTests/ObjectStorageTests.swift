@@ -6,7 +6,7 @@ final class ObjectStorageTests: XCTestCase {
     private var storage: ObjectStorage!
 
     override func setUp() async throws {
-        storage = ObjectStorage(storagePath: Self.testStoragePath)
+        storage = ObjectStorage(storagePath: Self.testStoragePath!)
 
         let allKeys = await storage.allKeys()
         for key in allKeys {
@@ -19,7 +19,7 @@ final class ObjectStorageTests: XCTestCase {
 
         let readObject: CodableObject? = await storage.object(forKey: Self.testCacheKey)
 
-        XCTAssertEqual(readObject, Self.testObject)
+        XCTAssert(readObject == Self.testObject)
 
         // Test overwriting an object
         let updatedTestObject = CodableObject(value: "updated-value")
@@ -38,7 +38,7 @@ final class ObjectStorageTests: XCTestCase {
         try await storage.store(Self.testObject, forKey: Self.testCacheKey, subdirectory: "test-subdirectory")
         let readObject: CodableObject? = await storage.object(forKey: Self.testCacheKey, subdirectory: "test-subdirectory")
 
-        XCTAssertEqual(readObject, Self.testObject)
+        XCTAssert(readObject == Self.testObject)
 
         let incorrectSubdirectoryObject: CodableObject? = await storage.object(forKey: Self.testCacheKey, subdirectory: "fake-subdirectory")
         XCTAssertNil(incorrectSubdirectoryObject)
@@ -64,35 +64,65 @@ final class ObjectStorageTests: XCTestCase {
         } catch {
             // We want to end up in the catch block if the caller tries to remove an object from a key that does not have an object
             let readObject: CodableObject? = await storage.object(forKey: Self.testCacheKey)
-            XCTAssertEqual(readObject, Self.testObject)
+            XCTAssert(readObject == Self.testObject)
             return
         }
 
         XCTFail("Removing from non-existent key failed to produce an error as was expected")
     }
 
+    func testRemoveAllObjects() async throws {
+        try await storage.store(Self.testObject, forKey: Self.testCacheKey)
+        let keyCount = await storage.allKeys().count
+        XCTAssert(keyCount == 1)
+
+        try await storage.removeAllObjects()
+        let updatedKeyCount = await storage.allKeys().count
+        XCTAssert(updatedKeyCount == 0)
+
+        let subdirectory = "subdirectory"
+        try await storage.store(Self.testObject, forKey: Self.testCacheKey, subdirectory: subdirectory)
+
+        let subdirectoryKeyCount = await storage.allKeys(inSubdirectory: subdirectory).count
+        XCTAssert(subdirectoryKeyCount == 1)
+
+        try await storage.removeAllObjects()
+        let updatedSubdirectoryKeyCount = await storage.allKeys(inSubdirectory: subdirectory).count
+        XCTAssert(updatedSubdirectoryKeyCount == 0)
+    }
+
     func testKeyCount() async throws {
         let keyCount = await storage.keyCount()
 
-        XCTAssertEqual(keyCount, 0)
+        XCTAssert(keyCount == 0)
 
         try await self.writeCacheKeys(count: 10)
         let updatedKeyCount = await storage.keyCount()
-        XCTAssertEqual(updatedKeyCount, 10)
+        XCTAssert(updatedKeyCount == 10)
 
         // Overwriting an object in the same cache keys and ensuring that the count doesn't change
         try await self.writeCacheKeys(count: 10)
         let overwrittenKeyCount = await storage.keyCount()
-        XCTAssertEqual(overwrittenKeyCount, 10)
+        XCTAssert(overwrittenKeyCount == 10)
+
+        let subdirectory = "subdirectory"
+        try await storage.store(Self.testObject, forKey: Self.testCacheKey, subdirectory: subdirectory)
+
+        let subdirectoryKeyCount = await storage.allKeys(inSubdirectory: subdirectory).count
+        XCTAssert(subdirectoryKeyCount == 1)
+
+        // Ensure that subdirectories are not treated as additional keys
+        let directoryAfterAddingSubdirectoryKeyCount = await storage.allKeys().count
+        XCTAssert(directoryAfterAddingSubdirectoryKeyCount == 10)
     }
 
     func testAllKeys() async throws {
         try await self.writeCacheKeys(count: 10)
         let allKeys = await storage.allKeys().sorted(by: { $0.value < $1.value })
 
-        XCTAssertEqual(allKeys[0].value, "0")
-        XCTAssertEqual(allKeys[3].value, "3")
-        XCTAssertEqual(allKeys.count, 10)
+        XCTAssert(allKeys[0].value == "0")
+        XCTAssert(allKeys[3].value == "3")
+        XCTAssert(allKeys.count == 10)
     }
 
 }
@@ -105,7 +135,8 @@ private extension ObjectStorageTests {
 
     static let testObject = CodableObject(value: "default-value")
     static let testCacheKey: CacheKey = "test-key"
-    static let testStoragePath = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask).first!
+    static let pathComponent = "Test"
+    static let testStoragePath = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask).first?.appendingPathComponent(ObjectStorageTests.pathComponent)
 
     func writeCacheKeys(count: Int) async throws {
         for i in 0..<count {

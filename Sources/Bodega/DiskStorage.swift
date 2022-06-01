@@ -44,6 +44,19 @@ public actor DiskStorage {
         try FileManager.default.removeItem(at: self.concatenatedPath(key: key.value, subdirectory: subdirectory))
     }
 
+    /// Removes all the data located at the `storagePath` or it's `subdirectory`.
+    /// - subdirectory: An optional subdirectory the caller can remove a file from.
+    public func removeAllData(subdirectory: String? = nil) throws {
+        let folderToRemove: URL
+        if let subdirectory = subdirectory {
+            folderToRemove = self.folder.appendingPathComponent(subdirectory)
+        } else {
+            folderToRemove = self.folder
+        }
+
+        try FileManager.default.removeItem(at: folderToRemove)
+    }
+
     /// Iterates through a directory to find all of the files and their respective keys.
     /// - Parameter subdirectory: An optional subdirectory the caller can navigate for iteration.
     /// - Returns: An array of the keys contained in a directory.
@@ -56,9 +69,14 @@ public actor DiskStorage {
             directory = folder
         }
 
-        guard let keys = try? FileManager.default.contentsOfDirectory(atPath: directory.path) else { return [] }
+        do {
+            let directoryContents = try FileManager.default.contentsOfDirectory(at: directory, includingPropertiesForKeys: nil)
+            let fileOnlyKeys = directoryContents.filter({ !$0.hasDirectoryPath }).map(\.lastPathComponent)
 
-        return keys.map({ CacheKey.init($0) })
+            return fileOnlyKeys.map({ CacheKey.init($0) })
+        } catch {
+            return []
+        }
     }
 
     /// Iterates through a directory to find the total number of files.
