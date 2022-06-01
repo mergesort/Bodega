@@ -67,11 +67,11 @@ final class DiskStorageTests: XCTestCase {
         let subdirectory = "subdirectory"
         try await storage.write(Self.testData, key: Self.testCacheKey, subdirectory: subdirectory)
 
-        let subdirectoryKeyCount = await storage.allKeys(subdirectory: subdirectory).count
+        let subdirectoryKeyCount = await storage.allKeys(inSubdirectory: subdirectory).count
         XCTAssert(subdirectoryKeyCount == 1)
 
         try await storage.removeAllData()
-        let updatedSubdirectoryKeyCount = await storage.allKeys(subdirectory: subdirectory).count
+        let updatedSubdirectoryKeyCount = await storage.allKeys(inSubdirectory: subdirectory).count
         XCTAssert(updatedSubdirectoryKeyCount == 0)
     }
 
@@ -107,7 +107,7 @@ final class DiskStorageTests: XCTestCase {
         let subdirectory = "subdirectory"
         try await storage.write(Self.testData, key: Self.testCacheKey, subdirectory: subdirectory)
 
-        let subdirectoryKeyCount = await storage.allKeys(subdirectory: subdirectory).count
+        let subdirectoryKeyCount = await storage.allKeys(inSubdirectory: subdirectory).count
         XCTAssert(subdirectoryKeyCount == 1)
 
         // Ensure that subdirectories are not treated as additional keys

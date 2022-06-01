@@ -46,7 +46,7 @@ public actor DiskStorage {
 
     /// Removes all the data located at the `storagePath` or it's `subdirectory`.
     /// - subdirectory: An optional subdirectory the caller can remove a file from.
-    public func removeAllData(subdirectory: String? = nil) throws {
+    public func removeAllData(inSubdirectory subdirectory: String? = nil) throws {
         let folderToRemove: URL
         if let subdirectory = subdirectory {
             folderToRemove = self.folder.appendingPathComponent(subdirectory)
@@ -60,7 +60,7 @@ public actor DiskStorage {
     /// Iterates through a directory to find all of the files and their respective keys.
     /// - Parameter subdirectory: An optional subdirectory the caller can navigate for iteration.
     /// - Returns: An array of the keys contained in a directory.
-    public func allKeys(subdirectory: String? = nil) -> [CacheKey] {
+    public func allKeys(inSubdirectory subdirectory: String? = nil) -> [CacheKey] {
         let directory: URL
 
         if let subdirectory = subdirectory {
@@ -83,7 +83,7 @@ public actor DiskStorage {
     /// - Parameter subdirectory: An optional subdirectory the caller can navigate for iteration.
     /// - Returns: The file/key count.
     public func keyCount(inSubdirectory subdirectory: String? = nil) -> Int {
-        return self.allKeys(subdirectory: subdirectory).count
+        return self.allKeys(inSubdirectory: subdirectory).count
     }
 
 }
