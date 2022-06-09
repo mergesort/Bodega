@@ -4,7 +4,16 @@
 
 Is this library the best caching library? Absolutely not, but nobody thinks a [bodega](https://en.wikipedia.org/wiki/Bodega_(store)) is the best store either. Like a bodega this library is there for you when you need something simple and you want it to work.
 
-Bodega is a straightforward actor-based library for writing files to disk with an incredibly simple API. Bodega is fully usable and useful on it's own, but it's also the foundation of [Boutique](https://github.com/mergesort/Boutique). You can find a fully featured reference implementation in this [repo](https://github.com/mergesort/UMVC) that shows you how to make an offline-ready app in only a few lines of code. You can read more about the philosophy in this blog post exploring a [Unidirectional MVC architecture for SwiftUI](https://fabisevi.ch/fix-this).
+Bodega is a straightforward actor-based library for writing files to disk with an incredibly simple API. Bodega is fully usable and useful on it's own, but it's also the foundation of [Boutique](https://github.com/mergesort/Boutique). You can find a reference implementation of an app built atop the Model View Controller Store architecture in this [repo](https://github.com/mergesort/MVCS) which shows you how to make an offline-ready realtime updating SwiftUI app in only a few lines of code. You can read more about the thinking behind the architecture in this blog post exploring the [MVCS architecture](https://fabisevi.ch/fix-this).
+
+---
+
+* [Getting Started](#getting-started)
+* [DiskStorage](#diskstorage)
+* [ObjectStorage](#objectstorage)
+* [Further Exploration](#further-exploration)
+
+---
 
 ### Getting Started
 
@@ -14,7 +23,7 @@ Both `DiskStorage` and `ObjectStorage` are implemented as actors which means the
 
 ---
 
-#### DiskStorage
+### DiskStorage
 
 ```swift
 // CacheKeys can be generated from a String or URL.
@@ -33,7 +42,9 @@ let readData = await storage.read(key: cacheKey)
 try await storage.remove(key: Self.testCacheKey)
 ```
 
-#### ObjectStorage
+---
+
+### ObjectStorage
 
 `ObjectStorage` has a very similar API to `DiskStorage`, but with slight naming deviations to be more explicit that you're working with objects and not data.
 
@@ -66,7 +77,11 @@ try await storage.removeObject(forKey: cacheKey)
 
 ---
 
-Bodega is very useful on it's own for saving files and objects to disk, but it's made even more powerful by using [Boutique](https://github.com/mergesort/Boutique). Boutique is a `Store` and serves as the foundation of a Unidirectional MVC architecture I've developed. If you'd like to learn more about how it works you can read about the philosophy in a [blog post](https://fabisevi.ch/fix-this) where I explore UMVC for SwiftUI, and you can find a reference implementation of an offline-ready real-time UMVC app powered by Boutique in this [repo](https://github.com/mergesort/UMVC).
+### Further Exploration
+
+Bodega is very useful on it's own for saving files and objects to disk, but it's made even more powerful by using [Boutique](https://github.com/mergesort/Boutique). Boutique is a `Store` and serves as the foundation of a Model View Controller Store architecture I've developed. MVCS brings together the familiarity and simplicity of the [MVC architecture](https://developer.apple.com/library/archive/documentation/General/Conceptual/DevPedia-CocoaCore/MVC.html) you know and love with the power of a `Store`, to give your app a simple but well-defined state management and data architecture.
+
+If you'd like to learn more about how it works you can read about the philosophy in a [blog post](https://fabisevi.ch/fix-this) where I explore MVCS for SwiftUI, and you can find a reference implementation of an offline-ready realtime updating MVCS app powered by Boutique in this [repo](https://github.com/mergesort/MVCS).
 
 ---
 
