@@ -7,11 +7,7 @@ final class DiskStorageTests: XCTestCase {
 
     override func setUp() async throws {
         storage = DiskStorage(storagePath: Self.testStoragePath!)
-
-        let allKeys = await storage.allKeys()
-        for key in allKeys {
-            try await storage.remove(key: key)
-        }
+        try await storage.removeAllData()
     }
 
     func testWriteDataSucceeds() async throws {
@@ -29,7 +25,7 @@ final class DiskStorageTests: XCTestCase {
     }
 
     func testReadingMissingData() async throws {
-        let readData = await storage.read(key: "fake-key")
+        let readData = await storage.read(key: CacheKey(verbatim: "fake-key"))
         XCTAssertNil(readData)
     }
 
@@ -75,19 +71,12 @@ final class DiskStorageTests: XCTestCase {
         XCTAssert(updatedSubdirectoryKeyCount == 0)
     }
 
-    func testInvalidRemoveErrors() async throws {
+    func testRemovingNonExistentObjectDoesNotError() async throws {
         try await storage.write(Self.testData, key: Self.testCacheKey)
+        try await storage.remove(key: CacheKey(verbatim: "alternative-test-key"))
 
-        do {
-            try await storage.remove(key: "alternative-test-key")
-        } catch {
-            // We want to end up in the catch block if the caller tries to remove data from a key that does not have data
-            let readData = await storage.read(key: Self.testCacheKey)
-            XCTAssert(readData == Self.testData)
-            return
-        }
-
-        XCTFail("Removing from non-existent key failed to produce an error as was expected")
+        let readData = await storage.read(key: Self.testCacheKey)
+        XCTAssert(readData == Self.testData)
     }
 
     func testKeyCount() async throws {
@@ -129,13 +118,13 @@ final class DiskStorageTests: XCTestCase {
 private extension DiskStorageTests {
 
     static let testData = Data("Test".utf8)
-    static let testCacheKey: CacheKey = "test-key"
+    static let testCacheKey = CacheKey(verbatim: "test-key")
     static let pathComponent = "Test"
     static let testStoragePath = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask).first?.appendingPathComponent(DiskStorageTests.pathComponent)
 
     func writeCacheKeys(count: Int) async throws {
         for i in 0..<count {
-            try await storage.write(Self.testData, key: CacheKey("\(i)"))
+            try await storage.write(Self.testData, key: CacheKey(verbatim: "\(i)"))
         }
     }
 

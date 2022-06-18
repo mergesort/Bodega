@@ -7,11 +7,7 @@ final class ObjectStorageTests: XCTestCase {
 
     override func setUp() async throws {
         storage = ObjectStorage(storagePath: Self.testStoragePath!)
-
-        let allKeys = await storage.allKeys()
-        for key in allKeys {
-            try await storage.removeObject(forKey: key)
-        }
+        try await storage.removeAllObjects()
     }
 
     func testWriteObjectSucceeds() async throws {
@@ -58,17 +54,10 @@ final class ObjectStorageTests: XCTestCase {
 
     func testInvalidRemoveErrors() async throws {
         try await storage.store(Self.testObject, forKey: Self.testCacheKey)
+        try await storage.removeObject(forKey: CacheKey("alternative-test-key"))
 
-        do {
-            try await storage.removeObject(forKey: "alternative-test-key")
-        } catch {
-            // We want to end up in the catch block if the caller tries to remove an object from a key that does not have an object
-            let readObject: CodableObject? = await storage.object(forKey: Self.testCacheKey)
-            XCTAssert(readObject == Self.testObject)
-            return
-        }
-
-        XCTFail("Removing from non-existent key failed to produce an error as was expected")
+        let readObject: CodableObject? = await storage.object(forKey: Self.testCacheKey)
+        XCTAssert(readObject == Self.testObject)
     }
 
     func testRemoveAllObjects() async throws {
@@ -134,13 +123,13 @@ private struct CodableObject: Codable, Equatable {
 private extension ObjectStorageTests {
 
     static let testObject = CodableObject(value: "default-value")
-    static let testCacheKey: CacheKey = "test-key"
+    static let testCacheKey = CacheKey("test-key")
     static let pathComponent = "Test"
     static let testStoragePath = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask).first?.appendingPathComponent(ObjectStorageTests.pathComponent)
 
     func writeCacheKeys(count: Int) async throws {
         for i in 0..<count {
-            try await storage.store(CodableObject(value: "value-\(i)"), forKey: CacheKey("\(i)"))
+            try await storage.store(CodableObject(value: "value-\(i)"), forKey: CacheKey(verbatim: "\(i)"))
         }
     }
 

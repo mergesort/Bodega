@@ -4,10 +4,11 @@ import XCTest
 final class CacheKeyTests: XCTestCase {
 
     func testCacheKeyExpressibleByStringLiteral() {
-        let literalCacheKey: CacheKey = "cache-key"
-        let cacheKey = CacheKey("cache-key")
+        let cacheKey = CacheKey(verbatim: "cache-key")
+        let hashedCacheKey = CacheKey("cache-key")
+        let hashedCacheKeyValue = "2536A137-81F3-3E55-574F-AFF9ACB9F995"
 
-        XCTAssertEqual(cacheKey.value, literalCacheKey.value)
+        XCTAssertEqual(hashedCacheKey.value, hashedCacheKeyValue)
         XCTAssertEqual(cacheKey.value, "cache-key")
     }
 

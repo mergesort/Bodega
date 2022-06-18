@@ -9,29 +9,30 @@ public struct CacheKey {
     /// The `String` representation of your `CacheKey`.
     public let value: String
 
-    /// Initializes a `CacheKey` from a `URL`.
+    /// Initializes a `CacheKey` from a `URL`. This initializer is useful if you plan on using
+    /// `CacheKey`s for storing files on disk because file have many limitations about
+    /// which characters that are allowed in file names, and the maximum length of a file name.
     /// - Parameter url: The URL to use as the foundation of your cache key.
     /// The URL will be sanitized to account for common user-generated differences
     /// before generating a cache key, so note that https://redpanda.club and https://www.redpanda.club
     /// will generate a `CacheKey` with the same underlying value.
     public init(url: URL) {
         let md5HashedURLString = Self.sanitizedURLString(url).md5
-        self.value = md5HashedURLString.uuidFormatted ?? md5HashedURLString
+        self.init(verbatim: md5HashedURLString.uuidFormatted ?? md5HashedURLString)
     }
 
-    /// Initializes a `CacheKey` from a `String`.
+    /// Initializes a `CacheKey` from a `String`, creating a hashed version of the input `String`.
+    /// This initializer is useful if you plan on using `CacheKey`s for storing files on disk
+    /// because file have many limitations about characters that are allowed in file names,
+    /// and the maximum length of a file name.
     /// - Parameter value: The `String` which will serve as the underlying value for this `CacheKey`.
     public init(_ value: String) {
-        self.value = value
+        self.init(verbatim: value.md5.uuidFormatted ?? value.md5)
     }
 
-}
-
-extension CacheKey: ExpressibleByStringLiteral {
-
-    /// An initializer to allow you as a convenience to use a `String` in place of a `CacheKey`.
-    /// - Parameter value: A `String` literal to use as a `CacheKey` value.
-    public init(stringLiteral value: String) {
+    /// Initializes a `CacheKey` from a `String`, using the exact `String` as the value of the `CacheKey`.
+    /// - Parameter value: The `String` which will serve as the underlying value for this `CacheKey`.
+    public init(verbatim value: String) {
         self.value = value
     }
 
