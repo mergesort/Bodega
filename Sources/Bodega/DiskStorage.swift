@@ -41,7 +41,13 @@ public actor DiskStorage {
     ///   - key: A `CacheKey` for matching Data to a location on disk.
     ///   - subdirectory: An optional subdirectory the caller can remove a file from.
     public func remove(key: CacheKey, subdirectory: String? = nil) throws {
-        try FileManager.default.removeItem(at: self.concatenatedPath(key: key.value, subdirectory: subdirectory))
+        do {
+            try FileManager.default.removeItem(at: self.concatenatedPath(key: key.value, subdirectory: subdirectory))
+        } catch CocoaError.fileNoSuchFile {
+            // No-op, we treat deleting a non-existent file/folder as a successful removal rather than throwing
+        } catch {
+            throw error
+        }
     }
 
     /// Removes all the data located at the `storagePath` or it's `subdirectory`.
@@ -54,7 +60,13 @@ public actor DiskStorage {
             folderToRemove = self.folder
         }
 
-        try FileManager.default.removeItem(at: folderToRemove)
+        do {
+            try FileManager.default.removeItem(at: folderToRemove)
+        } catch CocoaError.fileNoSuchFile {
+            // No-op, we treat deleting a non-existent file/folder as a successful removal rather than throwing
+        } catch {
+            throw error
+        }
     }
 
     /// Iterates through a directory to find all of the files and their respective keys.
@@ -73,7 +85,7 @@ public actor DiskStorage {
             let directoryContents = try FileManager.default.contentsOfDirectory(at: directory, includingPropertiesForKeys: nil)
             let fileOnlyKeys = directoryContents.filter({ !$0.hasDirectoryPath }).map(\.lastPathComponent)
 
-            return fileOnlyKeys.map({ CacheKey.init($0) })
+            return fileOnlyKeys.map(CacheKey.init(verbatim:))
         } catch {
             return []
         }
