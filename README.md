@@ -26,6 +26,14 @@ Both `DiskStorage` and `ObjectStorage` are implemented as actors which means the
 ### DiskStorage
 
 ```swift
+// Initialize a DiskStorage object
+let storage = DiskStorage(
+    storagePath: FileManager.default
+        .urls(for: .documentDirectory, in: .userDomainMask)
+        .first!
+        .appendingPathComponent("Quotes")
+)
+
 // CacheKeys can be generated from a String or URL.
 // URLs will be reformatted into a file system safe format before writing to disk.
 let url = URL(string: "https://redpanda.club/dope-quotes/dolly-parton")
@@ -49,8 +57,15 @@ try await storage.remove(key: Self.testCacheKey)
 `ObjectStorage` has a very similar API to `DiskStorage`, but with slight naming deviations to be more explicit that you're working with objects and not data.
 
 ```swift
-// CacheKey conforms to ExpressibleByStringLiteral so you can pass in a string wherever you use a CacheKey.
-let cacheKey: CacheKey = "churchill-optimisim"
+// Initialize a DiskStorage object
+let storage = ObjectStorage(
+    storagePath: FileManager.default
+        .urls(for: .documentDirectory, in: .userDomainMask)
+        .first!
+        .appendingPathComponent("Quotes")
+)
+
+let cacheKey = CacheKey("churchill-optimisim")
 
 let quote = Quote(
     id: "winston-churchill-1",
