@@ -2,7 +2,7 @@
 
 ### A simple store for all your basic needs, accepting cache money my friend 🐱
 
-Is this library the best caching library? Absolutely not. But as a born and raised New Yorker I can attest that nobody thinks a [bodega](https://en.wikipedia.org/wiki/Bodega_(store) is the best store either, yet we appreciate 'em and what they do for us. Like a bodega this library is there for you when you need something simple and you want it to work.
+Is this library the best caching library? Absolutely not. But as a born and raised New Yorker I can attest that nobody thinks a [bodega](https://en.wikipedia.org/wiki/Bodega_(store)) is the best store either, yet we appreciate 'em and what they do for us. Like a bodega this library is there for you when you need something simple and you want it to work.
 
 Bodega is a straightforward actor-based library for writing files to disk with an incredibly simple API. Bodega is fully usable and useful on it's own, but it's also the foundation of [Boutique](https://github.com/mergesort/Boutique). You can find a reference implementation of an app built atop the Model View Controller Store architecture in this [repo](https://github.com/mergesort/MVCS) which shows you how to make an offline-ready realtime updating SwiftUI app in only a few lines of code. You can read more about the thinking behind the architecture in this blog post exploring the [MVCS architecture](https://build.ms/drafts/model-view-controller-store).
 
