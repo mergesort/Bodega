@@ -1,6 +1,6 @@
 ![Bodega Logo](Images/logo.jpg)
 
-### A simple store for all your basic needs, accepting cache money my friend 🐱
+### A simple store for all your basic needs. 🐱
 
 Is this library the best caching library? Absolutely not. But as a born and raised New Yorker I can attest that nobody thinks a [bodega](https://en.wikipedia.org/wiki/Bodega_(store)) is the best store either, yet we appreciate 'em and what they do for us. Like a bodega this library is there for you when you need something simple and you want it to work.
 
