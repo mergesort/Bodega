@@ -6,7 +6,7 @@ final class ObjectStorageTests: XCTestCase {
     private var storage: ObjectStorage!
 
     override func setUp() async throws {
-        storage = ObjectStorage(storagePath: Self.testStoragePath!)
+        storage = ObjectStorage(storagePath: Self.testStoragePath)
         try await storage.removeAllObjects()
     }
 
@@ -125,7 +125,7 @@ private extension ObjectStorageTests {
     static let testObject = CodableObject(value: "default-value")
     static let testCacheKey = CacheKey("test-key")
     static let pathComponent = "Test"
-    static let testStoragePath = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask).first?.appendingPathComponent(ObjectStorageTests.pathComponent)
+    static let testStoragePath = DiskStorage.temporaryDirectory(appendingPath: ObjectStorageTests.pathComponent)
 
     func writeCacheKeys(count: Int) async throws {
         for i in 0..<count {
