@@ -20,9 +20,17 @@ let package = Package(
     targets: [
         .target(
             name: "Bodega",
-            dependencies: []),
+            dependencies: [],
+            swiftSettings: [
+                .unsafeFlags([
+                    "-Xfrontend", "-warn-concurrency",
+                    "-Xfrontend", "-enable-actor-data-race-checks",
+                ]),
+            ]
+        ),
         .testTarget(
             name: "BodegaTests",
-            dependencies: ["Bodega"]),
+            dependencies: ["Bodega"]
+        )
     ]
 )

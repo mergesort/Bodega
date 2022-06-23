@@ -17,7 +17,7 @@ public actor ObjectStorage {
     ///   - object: The object being stored to disk.
     ///   - key: key A `CacheKey` for matching Data to a location on disk.
     ///   - subdirectory: An optional subdirectory the caller can write to.
-    public func store<Object: Codable>(_ object: Object, forKey key: CacheKey, subdirectory: String? = nil) async throws {
+    public func store<Object: Codable & Sendable>(_ object: Object, forKey key: CacheKey, subdirectory: String? = nil) async throws {
         let data = try JSONEncoder().encode(object)
 
         return try await storage.write(data, key: key, subdirectory: subdirectory)
@@ -28,7 +28,7 @@ public actor ObjectStorage {
     ///   - key: A `CacheKey` for matching Data to a location on disk.
     ///   - subdirectory: An optional subdirectory the caller can read from.
     /// - Returns: The an object stored on disk if it exists, nil if there is no data stored behind the `CacheKey`.
-    public func object<Object: Codable>(forKey key: CacheKey, subdirectory: String? = nil) async -> Object? {
+    public func object<Object: Codable & Sendable>(forKey key: CacheKey, subdirectory: String? = nil) async -> Object? {
         guard let data = await storage.read(key: key, subdirectory: subdirectory) else { return nil }
 
         return try? JSONDecoder().decode(Object.self, from: data)
