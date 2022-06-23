@@ -75,10 +75,10 @@ let quote = Quote(
 )
 
 // Store an object to disk
-try await storage.store(Self.testObject, forKey: cacheKey)
+try await storage.store(quote, forKey: cacheKey)
 
 // Read an object from disk
-let readObject: CodableObject? = await storage.object(forKey: cacheKey)
+let readObject: Quote? = await storage.object(forKey: cacheKey)
 
 // Grab all the keys, which at this point will be one key, `cacheKey`.
 let allKeys = await storage.allKeys()
