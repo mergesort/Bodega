@@ -4,7 +4,7 @@
 
 Is this library the best caching library? Absolutely not. But as a born and raised New Yorker I can attest that nobody thinks a [bodega](https://en.wikipedia.org/wiki/Bodega_(store)) is the best store either, yet we appreciate 'em and what they do for us. Like a bodega this library is there for you when you need something simple and you want it to work.
 
-Bodega is a straightforward actor-based library for writing files to disk with an incredibly simple API. Bodega is fully usable and useful on it's own, but it's also the foundation of [Boutique](https://github.com/mergesort/Boutique). You can find a reference implementation of an app built atop the Model View Controller Store architecture in this [repo](https://github.com/mergesort/MVCS) which shows you how to make an offline-ready realtime updating SwiftUI app in only a few lines of code. You can read more about the thinking behind the architecture in this blog post exploring the [MVCS architecture](https://build.ms/2022/06/22/model-view-controller-store).
+Bodega is a straightforward actor-based library for writing files to disk with an incredibly simple API. Bodega is fully usable and useful on its own, but it's also the foundation of [Boutique](https://github.com/mergesort/Boutique). You can find a reference implementation of an app built atop the Model View Controller Store architecture in this [repo](https://github.com/mergesort/MVCS) which shows you how to make an offline-ready realtime updating SwiftUI app in only a few lines of code. You can read more about the thinking behind the architecture in this blog post exploring the [MVCS architecture](https://build.ms/2022/06/22/model-view-controller-store).
 
 ---
 
@@ -94,7 +94,7 @@ try await storage.removeObject(forKey: cacheKey)
 
 ### Further Exploration
 
-Bodega is very useful on it's own for saving files and objects to disk, but it's made even more powerful by using [Boutique](https://github.com/mergesort/Boutique). Boutique is a `Store` and serves as the foundation of a Model View Controller Store architecture I've developed. MVCS brings together the familiarity and simplicity of the [MVC architecture](https://developer.apple.com/library/archive/documentation/General/Conceptual/DevPedia-CocoaCore/MVC.html) you know and love with the power of a `Store`, to give your app a simple but well-defined state management and data architecture.
+Bodega is very useful on its own for saving files and objects to disk, but it's made even more powerful by using [Boutique](https://github.com/mergesort/Boutique). Boutique is a `Store` and serves as the foundation of a Model View Controller Store architecture I've developed. MVCS brings together the familiarity and simplicity of the [MVC architecture](https://developer.apple.com/library/archive/documentation/General/Conceptual/DevPedia-CocoaCore/MVC.html) you know and love with the power of a `Store`, to give your app a simple but well-defined state management and data architecture.
 
 If you'd like to learn more about how it works you can read about the philosophy in a [blog post](https://build.ms/2022/06/22/model-view-controller-store) where I explore MVCS for SwiftUI, and you can find a reference implementation of an offline-ready realtime updating MVCS app powered by Boutique in this [repo](https://github.com/mergesort/MVCS).
 
