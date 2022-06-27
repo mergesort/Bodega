@@ -50,7 +50,7 @@ public actor DiskStorage {
     /// - Parameters:
     ///   - key: A `CacheKey` for matching Data to a location on disk.
     ///   - subdirectory: An optional subdirectory the caller can read from.
-    /// - Returns: The last access date date of the data on disk if it exists, nil if there is no data stored behind the `CacheKey`.
+    /// - Returns: The last access date of the data on disk if it exists, nil if there is no data stored behind the `CacheKey`.
     public func accessDate(key: CacheKey, subdirectory: String? = nil) -> Date? {
         return try? self.concatenatedPath(key: key.value, subdirectory: subdirectory)
             .resourceValues(forKeys: [.contentAccessDateKey]).contentAccessDate
