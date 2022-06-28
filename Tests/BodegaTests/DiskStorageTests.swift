@@ -112,17 +112,43 @@ final class DiskStorageTests: XCTestCase {
         XCTAssert(allKeys[3].value == "3")
         XCTAssert(allKeys.count == 10)
     }
-    
-    func testModificationDate() async throws {
+
+    func testCreationDate() async throws {
         // Make sure the modificationDate is nil if the key hasn't been stored
-        var modificationDate = await storage.modificationDate(key: Self.testCacheKey)
+        var modificationDate = await storage.lastModified(key: Self.testCacheKey)
+        XCTAssertNil(modificationDate)
+
+        // Make sure the modification date is in the right range if it has been stored
+        var dateBefore = Date()
+        try await storage.write(Self.testData, key: Self.testCacheKey)
+        var dateAfter = Date()
+        modificationDate = await storage.lastModified(key: Self.testCacheKey)
+        XCTAssertNotNil(modificationDate)
+        XCTAssertLessThanOrEqual(dateBefore, modificationDate!)
+        XCTAssertLessThanOrEqual(modificationDate!, dateAfter)
+
+        try await Task.sleep(nanoseconds: 1_000_000_000)
+
+        // Make sure the modification date is updated when the data is re-written
+        dateBefore = Date()
+        try await storage.write(Self.testData, key: Self.testCacheKey)
+        dateAfter = Date()
+        modificationDate = await storage.lastModified(key: Self.testCacheKey)
+        XCTAssertNotNil(modificationDate)
+        XCTAssertLessThanOrEqual(dateBefore, modificationDate!)
+        XCTAssertLessThanOrEqual(modificationDate!, dateAfter)
+    }
+
+    func testLastModifiedDate() async throws {
+        // Make sure the modificationDate is nil if the key hasn't been stored
+        var modificationDate = await storage.lastModified(key: Self.testCacheKey)
         XCTAssertNil(modificationDate)
         
         // Make sure the modification date is in the right range if it has been stored
         var dateBefore = Date()
         try await storage.write(Self.testData, key: Self.testCacheKey)
         var dateAfter = Date()
-        modificationDate = await storage.modificationDate(key: Self.testCacheKey)
+        modificationDate = await storage.lastModified(key: Self.testCacheKey)
         XCTAssertNotNil(modificationDate)
         XCTAssertLessThanOrEqual(dateBefore, modificationDate!)
         XCTAssertLessThanOrEqual(modificationDate!, dateAfter)
@@ -133,22 +159,22 @@ final class DiskStorageTests: XCTestCase {
         dateBefore = Date()
         try await storage.write(Self.testData, key: Self.testCacheKey)
         dateAfter = Date()
-        modificationDate = await storage.modificationDate(key: Self.testCacheKey)
+        modificationDate = await storage.lastModified(key: Self.testCacheKey)
         XCTAssertNotNil(modificationDate)
         XCTAssertLessThanOrEqual(dateBefore, modificationDate!)
         XCTAssertLessThanOrEqual(modificationDate!, dateAfter)
     }
     
-    func testAccessDate() async throws {
+    func testLastAccessDate() async throws {
         // Make sure the accessDate is nil if the key hasn't been stored
-        var accessDate = await storage.accessDate(key: Self.testCacheKey)
+        var accessDate = await storage.lastAccessed(key: Self.testCacheKey)
         XCTAssertNil(accessDate)
         
         // Make sure the access date is in the right range if it has been stored
         var dateBefore = Date()
         try await storage.write(Self.testData, key: Self.testCacheKey)
         var dateAfter = Date()
-        accessDate = await storage.accessDate(key: Self.testCacheKey)
+        accessDate = await storage.lastAccessed(key: Self.testCacheKey)
         XCTAssertNotNil(accessDate)
         XCTAssertLessThanOrEqual(dateBefore, accessDate!)
         XCTAssertLessThanOrEqual(accessDate!, dateAfter)
@@ -160,7 +186,7 @@ final class DiskStorageTests: XCTestCase {
         let data = await storage.read(key: Self.testCacheKey)
         dateAfter = Date()
         XCTAssert(data == Self.testData)
-        accessDate = await storage.accessDate(key: Self.testCacheKey)
+        accessDate = await storage.lastAccessed(key: Self.testCacheKey)
         XCTAssertNotNil(accessDate)
         XCTAssertLessThanOrEqual(dateBefore, accessDate!)
         // Note that there is a slight delay between reading the data and the access time,
@@ -170,7 +196,7 @@ final class DiskStorageTests: XCTestCase {
         try await Task.sleep(nanoseconds: 1_000_000_000)
         
         // Make sure fetching the access date doesn't change the access date
-        let accessDate2 = await storage.accessDate(key: Self.testCacheKey)
+        let accessDate2 = await storage.lastAccessed(key: Self.testCacheKey)
         XCTAssertEqual(accessDate, accessDate2)
     }
 

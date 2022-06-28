@@ -35,26 +35,6 @@ public actor DiskStorage {
     public func read(key: CacheKey, subdirectory: String? = nil) -> Data? {
         return try? Data(contentsOf: self.concatenatedPath(key: key.value, subdirectory: subdirectory))
     }
-    
-    /// Returns the modification date of the `CacheKey`, if it exists.
-    /// - Parameters:
-    ///   - key: A `CacheKey` for matching Data to a location on disk.
-    ///   - subdirectory: An optional subdirectory the caller can read from.
-    /// - Returns: The modification date of the data on disk if it exists, nil if there is no data stored behind the `CacheKey`.
-    public func modificationDate(key: CacheKey, subdirectory: String? = nil) -> Date? {
-        return try? self.concatenatedPath(key: key.value, subdirectory: subdirectory)
-            .resourceValues(forKeys: [.contentModificationDateKey]).contentModificationDate
-    }
-    
-    /// Returns the last access date of the `CacheKey`, if it exists.
-    /// - Parameters:
-    ///   - key: A `CacheKey` for matching Data to a location on disk.
-    ///   - subdirectory: An optional subdirectory the caller can read from.
-    /// - Returns: The last access date of the data on disk if it exists, nil if there is no data stored behind the `CacheKey`.
-    public func accessDate(key: CacheKey, subdirectory: String? = nil) -> Date? {
-        return try? self.concatenatedPath(key: key.value, subdirectory: subdirectory)
-            .resourceValues(forKeys: [.contentAccessDateKey]).contentAccessDate
-    }
 
     /// Removes `Data` from disk with the associated `CacheKey`.
     /// - Parameters:
@@ -116,6 +96,36 @@ public actor DiskStorage {
     /// - Returns: The file/key count.
     public func keyCount(inSubdirectory subdirectory: String? = nil) -> Int {
         return self.allKeys(inSubdirectory: subdirectory).count
+    }
+
+    /// Returns the date of creation for the file represented by the `CacheKey`, if it exists.
+    /// - Parameters:
+    ///   - key: A `CacheKey` for matching Data to a location on disk.
+    ///   - subdirectory: An optional subdirectory the caller can read from.
+    /// - Returns: The last access date of the data on disk if it exists, nil if there is no data stored behind the `CacheKey`.
+    public func createdAt(key: CacheKey, subdirectory: String? = nil) -> Date? {
+        return try? self.concatenatedPath(key: key.value, subdirectory: subdirectory)
+            .resourceValues(forKeys: [.creationDateKey]).creationDate
+    }
+
+    /// Returns the last access date of the file behind the `CacheKey`, if it exists.
+    /// - Parameters:
+    ///   - key: A `CacheKey` for matching Data to a location on disk.
+    ///   - subdirectory: An optional subdirectory the caller can read from.
+    /// - Returns: The last access date of the data on disk if it exists, nil if there is no data stored behind the `CacheKey`.
+    public func lastAccessed(key: CacheKey, subdirectory: String? = nil) -> Date? {
+        return try? self.concatenatedPath(key: key.value, subdirectory: subdirectory)
+            .resourceValues(forKeys: [.contentAccessDateKey]).contentAccessDate
+    }
+
+    /// Returns the modification date for the file represented by the `CacheKey`, if it exists.
+    /// - Parameters:
+    ///   - key: A `CacheKey` for matching Data to a location on disk.
+    ///   - subdirectory: An optional subdirectory the caller can read from.
+    /// - Returns: The modification date of the data on disk if it exists, nil if there is no data stored behind the `CacheKey`.
+    public func lastModified(key: CacheKey, subdirectory: String? = nil) -> Date? {
+        return try? self.concatenatedPath(key: key.value, subdirectory: subdirectory)
+            .resourceValues(forKeys: [.contentModificationDateKey]).contentModificationDate
     }
 
 }

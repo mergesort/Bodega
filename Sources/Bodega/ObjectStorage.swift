@@ -33,24 +33,6 @@ public actor ObjectStorage {
 
         return try? JSONDecoder().decode(Object.self, from: data)
     }
-    
-    /// Returns the modification date of the `CacheKey`, if it exists.
-    /// - Parameters:
-    ///   - key: A `CacheKey` for matching Data to a location on disk.
-    ///   - subdirectory: An optional subdirectory the caller can read from.
-    /// - Returns: The modification date of the object on disk if it exists, nil if there is no object stored behind the `CacheKey`.
-    public func modificationDate(key: CacheKey, subdirectory: String? = nil) async -> Date? {
-        return await storage.modificationDate(key: key, subdirectory: subdirectory)
-    }
-    
-    /// Returns the last access date of the `CacheKey`, if it exists.
-    /// - Parameters:
-    ///   - key: A `CacheKey` for matching Data to a location on disk.
-    ///   - subdirectory: An optional subdirectory the caller can read from.
-    /// - Returns: The last access date of the object on disk if it exists, nil if there is no object stored behind the `CacheKey`.
-    public func accessDate(key: CacheKey, subdirectory: String? = nil) async -> Date? {
-        return await storage.accessDate(key: key, subdirectory: subdirectory)
-    }
 
     /// Removes an object from disk with the associated `CacheKey`.
     /// - Parameters:
@@ -78,6 +60,33 @@ public actor ObjectStorage {
     /// - Returns: The file/key count.
     public func keyCount(inSubdirectory subdirectory: String? = nil) async -> Int {
         return await storage.keyCount(inSubdirectory: subdirectory)
+    }
+
+    /// Returns the date of creation for the object represented by the `CacheKey`, if it exists.
+    /// - Parameters:
+    ///   - key: A `CacheKey` for matching Data to a location on disk.
+    ///   - subdirectory: An optional subdirectory the caller can read from.
+    /// - Returns: The last access date of the data on disk if it exists, nil if there is no data stored behind the `CacheKey`.
+    public func creationDate(forKey key: CacheKey, subdirectory: String? = nil) async -> Date? {
+        return await storage.createdAt(key: key, subdirectory: subdirectory)
+    }
+
+    /// Returns the last access date of the object behind the `CacheKey`, if it exists.
+    /// - Parameters:
+    ///   - key: A `CacheKey` for matching Data to a location on disk.
+    ///   - subdirectory: An optional subdirectory the caller can read from.
+    /// - Returns: The last access date of the object on disk if it exists, nil if there is no object stored behind the `CacheKey`.
+    public func lastAccessed(forKey key: CacheKey, subdirectory: String? = nil) async -> Date? {
+        return await storage.lastAccessed(key: key, subdirectory: subdirectory)
+    }
+
+    /// Returns the modification date for the object represented by the `CacheKey`, if it exists.
+    /// - Parameters:
+    ///   - key: A `CacheKey` for matching Data to a location on disk.
+    ///   - subdirectory: An optional subdirectory the caller can read from.
+    /// - Returns: The modification date of the object on disk if it exists, nil if there is no object stored behind the `CacheKey`.
+    public func lastModified(forKey key: CacheKey, subdirectory: String? = nil) async -> Date? {
+        return await storage.lastModified(key: key, subdirectory: subdirectory)
     }
 
 }
