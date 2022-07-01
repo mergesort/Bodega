@@ -1,6 +1,6 @@
 ![Bodega Logo](Images/logo.jpg)
 
-If you find Bodega valuable I would really appreciate it if you would consider sponsoring [my open source work](https://github.com/sponsors/mergesort), so I can continue to work on projects like Bodega to help developers like yourself.
+If you find Bodega valuable I would really appreciate it if you would consider [sponsoring my open source work](https://github.com/sponsors/mergesort), so I can continue to work on projects like Bodega to help developers like yourself.
 
 ---
 
