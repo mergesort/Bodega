@@ -1,10 +1,10 @@
 ![Bodega Logo](Images/logo.jpg)
 
+### A simple store for all your basic needs. 🐱
+
 If you find Bodega valuable I would really appreciate it if you would consider helping [sponsor my open source work](https://github.com/sponsors/mergesort), so I can continue to work on projects like Bodega to help developers like yourself.
 
 ---
-
-### A simple store for all your basic needs. 🐱
 
 Is this library the best caching library? Absolutely not. But as a born and raised New Yorker I can attest that nobody thinks a [bodega](https://en.wikipedia.org/wiki/Bodega_(store)) is the best store either, yet we appreciate 'em and what they do for us. Like a bodega this library is there for you when you need something simple and you want it to work.
 
@@ -137,3 +137,7 @@ Hi, I'm [Joe](http://fabisevi.ch) everywhere on the web, but especially on [Twit
 ## License
 
 See the [license](LICENSE) for more information about how you can use Bodega.
+
+## Sponsorship
+
+Bodega is a labor of love to help developers build better apps, making it easier for you to unlock your creativity and make something amazing for your yourself and your users. If you find Bodega valuable I would really appreciate it if you'd consider helping [sponsor my open source work](https://github.com/sponsors/mergesort), so I can continue to work on projects like Bodega to help developers like yourself.
