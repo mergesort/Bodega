@@ -130,14 +130,14 @@ If you prefer not to use SPM, you can integrate Bodega into your project manuall
 
 ---
 
-## About me
+### About me
 
 Hi, I'm [Joe](http://fabisevi.ch) everywhere on the web, but especially on [Twitter](https://twitter.com/mergesort).
 
-## License
+### License
 
 See the [license](LICENSE) for more information about how you can use Bodega.
 
-## Sponsorship
+### Sponsorship
 
 Bodega is a labor of love to help developers build better apps, making it easier for you to unlock your creativity and make something amazing for your yourself and your users. If you find Bodega valuable I would really appreciate it if you'd consider helping [sponsor my open source work](https://github.com/sponsors/mergesort), so I can continue to work on projects like Bodega to help developers like yourself.
