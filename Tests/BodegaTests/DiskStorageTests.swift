@@ -127,7 +127,7 @@ final class DiskStorageTests: XCTestCase {
         XCTAssertLessThanOrEqual(dateBefore, modificationDate!)
         XCTAssertLessThanOrEqual(modificationDate!, dateAfter)
 
-        try await Task.sleep(nanoseconds: 1_000_000_000)
+        try await Task.sleep(nanoseconds: 1_000_000)
 
         // Make sure the modification date is updated when the data is re-written
         dateBefore = Date()
@@ -153,7 +153,7 @@ final class DiskStorageTests: XCTestCase {
         XCTAssertLessThanOrEqual(dateBefore, modificationDate!)
         XCTAssertLessThanOrEqual(modificationDate!, dateAfter)
         
-        try await Task.sleep(nanoseconds: 1_000_000_000)
+        try await Task.sleep(nanoseconds: 1_000_000)
         
         // Make sure the modification date is updated when the data is re-written
         dateBefore = Date()
@@ -179,7 +179,7 @@ final class DiskStorageTests: XCTestCase {
         XCTAssertLessThanOrEqual(dateBefore, accessDate!)
         XCTAssertLessThanOrEqual(accessDate!, dateAfter)
         
-        try await Task.sleep(nanoseconds: 1_000_000_000)
+        try await Task.sleep(nanoseconds: 1_000_000)
         
         // Make sure the access date is updated when the data is read
         dateBefore = Date()
@@ -193,7 +193,7 @@ final class DiskStorageTests: XCTestCase {
         // so we need to allow for that.
         XCTAssertLessThanOrEqual(accessDate!, dateAfter.addingTimeInterval(0.001))
         
-        try await Task.sleep(nanoseconds: 1_000_000_000)
+        try await Task.sleep(nanoseconds: 1_000_000)
         
         // Make sure fetching the access date doesn't change the access date
         let accessDate2 = await storage.lastAccessed(key: Self.testCacheKey)
