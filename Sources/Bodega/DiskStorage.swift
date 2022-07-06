@@ -31,9 +31,62 @@ public actor DiskStorage {
     /// - Parameters:
     ///   - key: A `CacheKey` for matching Data to a location on disk.
     ///   - subdirectory: An optional subdirectory the caller can read from.
-    /// - Returns: The data stored on disk if it exists, nil if there is no data stored behind the `CacheKey`.
+    /// - Returns: The data stored on disk if it exists, nil if there is no data stored for the `CacheKey`.
     public func read(key: CacheKey, subdirectory: String? = nil) -> Data? {
         return try? Data(contentsOf: self.concatenatedPath(key: key.value, subdirectory: subdirectory))
+    }
+
+    /// Reads data from disk based on the associated array of `CacheKey`s provided as a parameter.
+    /// - Parameters:
+    ///   - keys: A [CacheKey] for matching multiple `Data` items to their a location on disk.
+    ///   - subdirectory: An optional subdirectory the caller can read from.
+    /// - Returns: An array of `[Data]` stored on disk if the `CacheKey`s exist,
+    /// and an `[]` if there is no data matching the `keys` passed in.
+    public func read(keys: [CacheKey], subdirectory: String? = nil) -> [Data] {
+        return keys.compactMap({ self.read(key: $0, subdirectory: subdirectory) })
+    }
+
+    /// Reads data from disk based on the associated array of `CacheKey`s provided as a parameter
+    /// and returns an array of a tuple of the `CacheKey` and `Data` associated with the passed in `CacheKey`s.
+    ///
+    /// This method returns the `CacheKey` and `Data` together in a tuple of `(CacheKey, Data)`
+    /// allowing you to know which `CacheKey` led to a specific `Data` item being retrieved.
+    /// This can be useful in allowing manual iteration over data, but if you don't need
+    /// to know which `CacheKey` that led to a piece of `Data` being retrieved
+    ///  you can use ``read(keys:subdirectory:)`` instead.
+    /// - Parameters:
+    ///   - keys: A [CacheKey] for matching multiple `Data` items to their a location on disk.
+    ///   - subdirectory: An optional subdirectory the caller can read from.
+    /// - Returns: An array of `[(CacheKey, Data)]` read from disk if the `CacheKey`s exist,
+    /// and an empty array if there are no data items matching the `keys` passed in.
+    public func readDataAndKeys(keys: [CacheKey], subdirectory: String? = nil) -> [(CacheKey, Data)] {
+        return zip(
+            keys,
+            self.read(keys: keys, subdirectory: subdirectory)
+        ).map { ($0, $1) }
+    }
+
+    /// Reads all the data located at the `storagePath` or it's `subdirectory`.
+    /// - Parameter subdirectory: An optional subdirectory the caller can navigate for iteration.
+    /// - Returns: An array of the data contained in a directory.
+    public func readAllData(inSubdirectory subdirectory: String? = nil) -> [Data] {
+        let allKeys = self.allKeys(inSubdirectory: subdirectory)
+        return self.read(keys: allKeys)
+    }
+
+    /// Reads all the data located at the `storagePath` or it's `subdirectory` and returns an array
+    /// of a tuple of the `CacheKey` and `Data` associated with the `CacheKey`.
+    ///
+    /// This method returns the `CacheKey` and `Data` together in a tuple of `(CacheKey, Data)`
+    /// allowing you to know which `CacheKey` led to a specific `Data` item being retrieved.
+    /// This can be useful in allowing manual iteration over data, but if you don't need
+    /// to know which `CacheKey` led to a piece of `Data` being retrieved
+    /// you can use ``readAllDataAndKeys(inSubdirectory:)`` instead.
+    /// - Parameter subdirectory: An optional subdirectory the caller can navigate for iteration.
+    /// - Returns: An array of the data and it's associated `CacheKey`s contained in a directory.
+    public func readAllDataAndKeys(inSubdirectory subdirectory: String? = nil) -> [(CacheKey, Data)] {
+        let allKeys = self.allKeys(inSubdirectory: subdirectory)
+        return self.readDataAndKeys(keys: allKeys)
     }
 
     /// Removes `Data` from disk with the associated `CacheKey`.
@@ -69,6 +122,13 @@ public actor DiskStorage {
         }
     }
 
+    /// Iterates through a directory to find the total number of files.
+    /// - Parameter subdirectory: An optional subdirectory the caller can navigate for iteration.
+    /// - Returns: The file/key count.
+    public func keyCount(inSubdirectory subdirectory: String? = nil) -> Int {
+        return self.allKeys(inSubdirectory: subdirectory).count
+    }
+
     /// Iterates through a directory to find all of the files and their respective keys.
     /// - Parameter subdirectory: An optional subdirectory the caller can navigate for iteration.
     /// - Returns: An array of the keys contained in a directory.
@@ -91,28 +151,21 @@ public actor DiskStorage {
         }
     }
 
-    /// Iterates through a directory to find the total number of files.
-    /// - Parameter subdirectory: An optional subdirectory the caller can navigate for iteration.
-    /// - Returns: The file/key count.
-    public func keyCount(inSubdirectory subdirectory: String? = nil) -> Int {
-        return self.allKeys(inSubdirectory: subdirectory).count
-    }
-
     /// Returns the date of creation for the file represented by the `CacheKey`, if it exists.
     /// - Parameters:
     ///   - key: A `CacheKey` for matching Data to a location on disk.
     ///   - subdirectory: An optional subdirectory the caller can read from.
-    /// - Returns: The last access date of the data on disk if it exists, nil if there is no data stored behind the `CacheKey`.
+    /// - Returns: The last access date of the data on disk if it exists, nil if there is no data stored for the `CacheKey`.
     public func createdAt(key: CacheKey, subdirectory: String? = nil) -> Date? {
         return try? self.concatenatedPath(key: key.value, subdirectory: subdirectory)
             .resourceValues(forKeys: [.creationDateKey]).creationDate
     }
 
-    /// Returns the last access date of the file behind the `CacheKey`, if it exists.
+    /// Returns the last access date of the file for the `CacheKey`, if it exists.
     /// - Parameters:
     ///   - key: A `CacheKey` for matching Data to a location on disk.
     ///   - subdirectory: An optional subdirectory the caller can read from.
-    /// - Returns: The last access date of the data on disk if it exists, nil if there is no data stored behind the `CacheKey`.
+    /// - Returns: The last access date of the data on disk if it exists, nil if there is no data stored for the `CacheKey`.
     public func lastAccessed(key: CacheKey, subdirectory: String? = nil) -> Date? {
         return try? self.concatenatedPath(key: key.value, subdirectory: subdirectory)
             .resourceValues(forKeys: [.contentAccessDateKey]).contentAccessDate
@@ -122,7 +175,7 @@ public actor DiskStorage {
     /// - Parameters:
     ///   - key: A `CacheKey` for matching Data to a location on disk.
     ///   - subdirectory: An optional subdirectory the caller can read from.
-    /// - Returns: The modification date of the data on disk if it exists, nil if there is no data stored behind the `CacheKey`.
+    /// - Returns: The modification date of the data on disk if it exists, nil if there is no data stored for the `CacheKey`.
     public func lastModified(key: CacheKey, subdirectory: String? = nil) -> Date? {
         return try? self.concatenatedPath(key: key.value, subdirectory: subdirectory)
             .resourceValues(forKeys: [.contentModificationDateKey]).contentModificationDate
