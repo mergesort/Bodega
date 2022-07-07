@@ -64,7 +64,7 @@ public actor ObjectStorage {
     ///   - subdirectory: An optional subdirectory the caller can read from.
     /// - Returns: An array of `[(CacheKey, Object)]` read from disk if it exists,
     /// and an empty array if there are no `Objects`s matching the `keys` passed in.
-    public func objectsAndKeys<Object: Codable>(keys: [CacheKey], subdirectory: String? = nil) async -> [(CacheKey, Object)] {
+    public func objectsAndKeys<Object: Codable>(keys: [CacheKey], subdirectory: String? = nil) async -> [(key: CacheKey, object: Object)] {
         return zip(
             keys,
             await self.objects(forKeys: keys, subdirectory: subdirectory)
@@ -89,7 +89,7 @@ public actor ObjectStorage {
     /// you can use ``readAllObjects(inSubdirectory:)`` instead.
     /// - Parameter subdirectory: An optional subdirectory the caller can navigate for iteration.
     /// - Returns: An array of `Object`s and it's associated `CacheKey`s contained in a directory.
-    public func allObjectsAndKeys<Object: Codable>(inSubdirectory subdirectory: String? = nil) async -> [(CacheKey, Object)] {
+    public func allObjectsAndKeys<Object: Codable>(inSubdirectory subdirectory: String? = nil) async -> [(key: CacheKey, object: Object)] {
         let allKeys = await self.allKeys(inSubdirectory: subdirectory)
         return await self.objectsAndKeys(keys: allKeys)
     }

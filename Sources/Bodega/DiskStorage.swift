@@ -59,7 +59,7 @@ public actor DiskStorage {
     ///   - subdirectory: An optional subdirectory the caller can read from.
     /// - Returns: An array of `[(CacheKey, Data)]` read from disk if the `CacheKey`s exist,
     /// and an empty array if there are no data items matching the `keys` passed in.
-    public func readDataAndKeys(keys: [CacheKey], subdirectory: String? = nil) -> [(CacheKey, Data)] {
+    public func readDataAndKeys(keys: [CacheKey], subdirectory: String? = nil) -> [(key: CacheKey, data: Data)] {
         return zip(
             keys,
             self.read(keys: keys, subdirectory: subdirectory)
@@ -84,7 +84,7 @@ public actor DiskStorage {
     /// you can use ``readAllDataAndKeys(inSubdirectory:)`` instead.
     /// - Parameter subdirectory: An optional subdirectory the caller can navigate for iteration.
     /// - Returns: An array of the data and it's associated `CacheKey`s contained in a directory.
-    public func readAllDataAndKeys(inSubdirectory subdirectory: String? = nil) -> [(CacheKey, Data)] {
+    public func readAllDataAndKeys(inSubdirectory subdirectory: String? = nil) -> [(key: CacheKey, data: Data)] {
         let allKeys = self.allKeys(inSubdirectory: subdirectory)
         return self.readDataAndKeys(keys: allKeys)
     }

@@ -54,16 +54,16 @@ final class ObjectStorageTests: XCTestCase {
         // Read all data with method that also provides CacheKeys
         let allKeys = await storage.allKeys().sorted(by: { $0.value < $1.value })
         let lastTwoKeys = Array(allKeys.suffix(2))
-        let lastTwoCacheKeysAndObjects: [(CacheKey, CodableObject)] = await storage.objectsAndKeys(keys: lastTwoKeys)
+        let lastTwoCacheKeysAndObjects: [(key: CacheKey, object: CodableObject)] = await storage.objectsAndKeys(keys: lastTwoKeys)
 
         // Testing that the keys returned are correct
-        XCTAssertEqual(lastTwoCacheKeysAndObjects.map(\.0), [
+        XCTAssertEqual(lastTwoCacheKeysAndObjects.map(\.key), [
             CacheKey(verbatim: "8"),
             CacheKey(verbatim: "9"),
         ])
 
         // Testing that the objects returned are correct
-        XCTAssertEqual(lastTwoCacheKeysAndObjects.map(\.1.value), [
+        XCTAssertEqual(lastTwoCacheKeysAndObjects.map(\.object.value), [
             "Test 8",
             "Test 9"
         ])
@@ -85,13 +85,13 @@ final class ObjectStorageTests: XCTestCase {
         ])
 
         // Reading all objects with the read method variant that also provides CacheKeys
-        let allKeysAndObjects: [(CacheKey, CodableObject)] = await storage.allObjectsAndKeys()
+        let allKeysAndObjects: [(key: CacheKey, object: CodableObject)] = await storage.allObjectsAndKeys()
         XCTAssertEqual(allKeysAndObjects.count, 10)
 
-        let keysDerivedFromKeysAndObjects = allKeysAndObjects.map(\.0)
+        let keysDerivedFromKeysAndObjects = allKeysAndObjects.map(\.key)
             .sorted(by: { $0.value < $1.value } )
 
-        let objectsDerivedFromKeysAndObjects = allKeysAndObjects.map(\.1)
+        let objectsDerivedFromKeysAndObjects = allKeysAndObjects.map(\.object)
             .sorted(by: { $0.value < $1.value })
 
         XCTAssertEqual([

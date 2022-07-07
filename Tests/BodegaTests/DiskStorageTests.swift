@@ -57,13 +57,13 @@ final class DiskStorageTests: XCTestCase {
         let lastTwoKeysAndData = await storage.readDataAndKeys(keys: lastTwoKeys)
 
         // Testing that the keys returned are correct
-        XCTAssertEqual(lastTwoKeysAndData.map(\.0), [
+        XCTAssertEqual(lastTwoKeysAndData.map(\.key), [
             CacheKey(verbatim: "8"),
             CacheKey(verbatim: "9"),
         ])
 
         // Testing that the data returned is correct
-        XCTAssertEqual(lastTwoKeysAndData.map(\.1).map({ String(data: $0, encoding: .utf8) }), [
+        XCTAssertEqual(lastTwoKeysAndData.map(\.data).map({ String(data: $0, encoding: .utf8) }), [
             "Test 8",
             "Test 9"
         ])
@@ -92,10 +92,10 @@ final class DiskStorageTests: XCTestCase {
         XCTAssertEqual(allKeysAndData.count, 10)
 
         let keysDerivedFromKeysAndData = allKeysAndData
-            .map(\.0)
+            .map(\.key)
             .sorted(by: { $0.value < $1.value } )
 
-        let stringsDerivedFromKeysAndData = allKeysAndData.map(\.1)
+        let stringsDerivedFromKeysAndData = allKeysAndData.map(\.data)
             .map({ String(data: $0, encoding: .utf8)! })
             .sorted(by: { $0 < $1 } )
 
