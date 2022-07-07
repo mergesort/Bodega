@@ -44,8 +44,8 @@ final class DiskStorageTests: XCTestCase {
         let firstTwoStrings = firstTwoValues.map({ String(data: $0, encoding: .utf8) })
 
         XCTAssertEqual(firstTwoStrings, [
-            "Test 0",
-            "Test 1"
+            "Value 0",
+            "Value 1"
         ])
 
         // Write some more test data to storage root
@@ -64,8 +64,8 @@ final class DiskStorageTests: XCTestCase {
 
         // Testing that the data returned is correct
         XCTAssertEqual(lastTwoKeysAndData.map(\.data).map({ String(data: $0, encoding: .utf8) }), [
-            "Test 8",
-            "Test 9"
+            "Value 8",
+            "Value 9"
         ])
 
         // Reading all data
@@ -81,10 +81,10 @@ final class DiskStorageTests: XCTestCase {
             allStrings[6],
             allStrings[9],
         ], [
-            "Test 0",
-            "Test 3",
-            "Test 6",
-            "Test 9"
+            "Value 0",
+            "Value 3",
+            "Value 6",
+            "Value 9"
         ])
 
         // Reading all data with the read method variant that also provides CacheKeys
@@ -114,9 +114,9 @@ final class DiskStorageTests: XCTestCase {
             stringsDerivedFromKeysAndData[4],
             stringsDerivedFromKeysAndData[7],
         ], [
-            "Test 1",
-            "Test 4",
-            "Test 7",
+            "Value 1",
+            "Value 4",
+            "Value 7",
         ])
     }
 
@@ -308,7 +308,7 @@ private extension DiskStorageTests {
     func writeItemsToDisk(count: Int, subdirectory: String? = nil) async throws {
         for i in 0..<count {
             // This encoding could fail in some use cases but we're going to use very simple strings for testing
-            try await storage.write("Test \(i)".data(using: .utf8)!, key: CacheKey(verbatim: "\(i)"), subdirectory: subdirectory)
+            try await storage.write("Value \(i)".data(using: .utf8)!, key: CacheKey(verbatim: "\(i)"), subdirectory: subdirectory)
         }
     }
 
