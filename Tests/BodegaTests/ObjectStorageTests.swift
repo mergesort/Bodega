@@ -22,6 +22,26 @@ final class ObjectStorageTests: XCTestCase {
         let updatedObject: CodableObject? = await storage.object(forKey: Self.testCacheKey)
 
         XCTAssertNotEqual(readObject, updatedObject)
+
+        try await storage.removeAllObjects()
+
+        let storedKeysAndObjects: [(key: CacheKey, object: CodableObject)] = [
+            (CacheKey(verbatim: "1"), CodableObject(value: "Value 1")),
+            (CacheKey(verbatim: "2"), CodableObject(value: "Value 2")),
+            (CacheKey(verbatim: "3"), CodableObject(value: "Value 3")),
+            (CacheKey(verbatim: "4"), CodableObject(value: "Value 4"))
+        ]
+
+        try await storage.store(storedKeysAndObjects)
+
+        let objectCount = await storage.keyCount()
+        XCTAssertEqual(objectCount, 4)
+
+        let readKeysAndObjects: [(key: CacheKey, object: CodableObject)] = await storage.allObjectsAndKeys()
+            .sorted(by: { $0.object.value < $1.object.value })
+
+        XCTAssertEqual(storedKeysAndObjects.map(\.key), readKeysAndObjects.map(\.key))
+        XCTAssertEqual(storedKeysAndObjects.map(\.object), readKeysAndObjects.map(\.object))
     }
 
     func testReadingObjectsSucceeds() async throws {

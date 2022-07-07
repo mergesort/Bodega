@@ -27,6 +27,17 @@ public actor DiskStorage {
         try data.write(to: fileURL, options: .atomic)
     }
 
+    /// Writes an array `Data` items to disk based on the the associated `CacheKey` passed in the tuple.
+    /// - Parameters:
+    ///   - dataAndKeys: An array of the tuple type (CacheKey, Data) to store multiple data items
+    ///   with their associated keys at once.
+    ///   - subdirectory: An optional subdirectory the caller can write to.
+    public func write(_ dataAndKeys: [(key: CacheKey, data: Data)], subdirectory: String? = nil) throws {
+        for dataAndKey in dataAndKeys {
+            try self.write(dataAndKey.data, key: dataAndKey.key, subdirectory: subdirectory)
+        }
+    }
+
     /// Reads `Data` from disk with the associated `CacheKey`.
     /// - Parameters:
     ///   - key: A `CacheKey` for matching Data to a location on disk.

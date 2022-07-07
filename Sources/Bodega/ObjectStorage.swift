@@ -23,6 +23,18 @@ public actor ObjectStorage {
         return try await storage.write(data, key: key, subdirectory: subdirectory)
     }
 
+    /// Writes an array of `Codable` `Object`s to disk based on the the associated `CacheKey` passed in the tuple.
+    /// - Parameters:
+    ///   - objectsAndKeys: An array of the tuple type (CacheKey, Object) to store multiple objects
+    ///   with their associated keys at once.
+    ///   - subdirectory: An optional subdirectory the caller can write to.
+    public func store<Object: Codable>(_ objectsAndKeys: [(key: CacheKey, object: Object)], subdirectory: String? = nil) async throws {
+        let encoder = JSONEncoder()
+        let dataAndKeys = try objectsAndKeys.map({ try ($0.key, encoder.encode($0.object)) })
+
+        try await storage.write(dataAndKeys, subdirectory: subdirectory)
+    }
+
     /// Reads a `Codable` object from disk with the associated `CacheKey`.
     /// - Parameters:
     ///   - key: A `CacheKey` for matching an `Object` to a location on disk.

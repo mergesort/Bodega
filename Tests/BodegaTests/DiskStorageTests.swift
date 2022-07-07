@@ -22,6 +22,26 @@ final class DiskStorageTests: XCTestCase {
         let updatedData = await storage.read(key: Self.testCacheKey)
 
         XCTAssertNotEqual(readData, updatedData)
+
+        try await storage.removeAllData()
+
+        let storedKeysAndData: [(key: CacheKey, data: Data)] = [
+            (CacheKey(verbatim: "1"), Data("Value 1".utf8)),
+            (CacheKey(verbatim: "2"), Data("Value 2".utf8)),
+            (CacheKey(verbatim: "3"), Data("Value 3".utf8)),
+            (CacheKey(verbatim: "4"), Data("Value 4".utf8))
+        ]
+
+        try await storage.write(storedKeysAndData)
+
+        let itemCount = await storage.keyCount()
+        XCTAssertEqual(itemCount, 4)
+
+        let readKeysAndObjects: [(key: CacheKey, data: Data)] = await storage.readAllDataAndKeys()
+            .sorted(by: { String(data: $0.data, encoding: .utf8)! < String(data: $1.data, encoding: .utf8)! })
+
+        XCTAssertEqual(storedKeysAndData.map(\.key), readKeysAndObjects.map(\.key))
+        XCTAssertEqual(storedKeysAndData.map(\.data), readKeysAndObjects.map(\.data))
     }
 
     func testReadingDataSucceeds() async throws {
