@@ -25,14 +25,7 @@ final class ObjectStorageTests: XCTestCase {
 
         try await storage.removeAllObjects()
 
-        let storedKeysAndObjects: [(key: CacheKey, object: CodableObject)] = [
-            (CacheKey(verbatim: "1"), CodableObject(value: "Value 1")),
-            (CacheKey(verbatim: "2"), CodableObject(value: "Value 2")),
-            (CacheKey(verbatim: "3"), CodableObject(value: "Value 3")),
-            (CacheKey(verbatim: "4"), CodableObject(value: "Value 4"))
-        ]
-
-        try await storage.store(storedKeysAndObjects)
+        try await storage.store(Self.storedKeysAndObjects)
 
         let objectCount = await storage.keyCount()
         XCTAssertEqual(objectCount, 4)
@@ -40,8 +33,8 @@ final class ObjectStorageTests: XCTestCase {
         let readKeysAndObjects: [(key: CacheKey, object: CodableObject)] = await storage.allObjectsAndKeys()
             .sorted(by: { $0.object.value < $1.object.value })
 
-        XCTAssertEqual(storedKeysAndObjects.map(\.key), readKeysAndObjects.map(\.key))
-        XCTAssertEqual(storedKeysAndObjects.map(\.object), readKeysAndObjects.map(\.object))
+        XCTAssertEqual(Self.storedKeysAndObjects.map(\.key), readKeysAndObjects.map(\.key))
+        XCTAssertEqual(Self.storedKeysAndObjects.map(\.object), readKeysAndObjects.map(\.object))
     }
 
     func testReadingObjectsSucceeds() async throws {
@@ -151,6 +144,7 @@ final class ObjectStorageTests: XCTestCase {
     }
 
     func testRemoveObjectSucceeds() async throws {
+        // Test removing an object based on it's key
         try await storage.store(Self.testObject, forKey: Self.testCacheKey)
         let readObject: CodableObject? = await storage.object(forKey: Self.testCacheKey)
 
@@ -160,6 +154,21 @@ final class ObjectStorageTests: XCTestCase {
         let updatedObject: CodableObject? = await storage.object(forKey: Self.testCacheKey)
 
         XCTAssertNil(updatedObject)
+
+        // Test removing multiple keys
+        let storedKeysAndData = Self.storedKeysAndObjects
+        try await storage.store(storedKeysAndData)
+
+        try await storage.removeObject(forKeys: [
+            storedKeysAndData[0].key,
+            storedKeysAndData[1].key,
+            storedKeysAndData[2].key,
+        ])
+
+        let allData: [(key: CacheKey, object: CodableObject)] = await storage.allObjectsAndKeys()
+        XCTAssertEqual(allData[0].key, storedKeysAndData[3].key)
+        XCTAssertEqual(allData[0].object, storedKeysAndData[3].object)
+
     }
 
     func testInvalidRemoveErrors() async throws {
@@ -323,6 +332,13 @@ private extension ObjectStorageTests {
     static let testCacheKey = CacheKey("test-key")
     static let pathComponent = "Test"
     static let testStoragePath = DiskStorage.temporaryDirectory(appendingPath: ObjectStorageTests.pathComponent)
+
+    static let storedKeysAndObjects: [(key: CacheKey, object: CodableObject)] = [
+        (CacheKey(verbatim: "1"), CodableObject(value: "Value 1")),
+        (CacheKey(verbatim: "2"), CodableObject(value: "Value 2")),
+        (CacheKey(verbatim: "3"), CodableObject(value: "Value 3")),
+        (CacheKey(verbatim: "4"), CodableObject(value: "Value 4"))
+    ]
 
     func writeObjectsToDisk(count: Int, subdirectory: String? = nil) async throws {
         for i in 0..<count {

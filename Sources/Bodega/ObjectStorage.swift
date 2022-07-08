@@ -23,7 +23,7 @@ public actor ObjectStorage {
         return try await storage.write(data, key: key, subdirectory: subdirectory)
     }
 
-    /// Writes an array of `Codable` `Object`s to disk based on the the associated `CacheKey` passed in the tuple.
+    /// Writes an array of `Codable` `Object`s to disk based on the associated `CacheKey` passed in the tuple.
     /// - Parameters:
     ///   - objectsAndKeys: An array of the tuple type (CacheKey, Object) to store multiple objects
     ///   with their associated keys at once.
@@ -112,6 +112,16 @@ public actor ObjectStorage {
     ///   - subdirectory: An optional subdirectory the caller can remove a file from.
     public func removeObject(forKey key: CacheKey, subdirectory: String? = nil) async throws {
         try await storage.remove(key: key, subdirectory: subdirectory)
+    }
+
+    /// Removes `Object`s from disk based on the associated array of `CacheKey`s provided as a parameter.
+    /// - Parameters:
+    ///   - keys: A [CacheKey] for matching multiple `Object`s to their a location on disk.
+    ///   - subdirectory: An optional subdirectory the caller can remove a file from.
+    public func removeObject(forKeys keys: [CacheKey], subdirectory: String? = nil) async throws {
+        for key in keys {
+            try await storage.remove(key: key, subdirectory: subdirectory)
+        }
     }
 
     /// Removes all the objects located at the `storagePath` or it's `subdirectory`.

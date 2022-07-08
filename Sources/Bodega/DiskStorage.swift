@@ -27,7 +27,7 @@ public actor DiskStorage {
         try data.write(to: fileURL, options: .atomic)
     }
 
-    /// Writes an array `Data` items to disk based on the the associated `CacheKey` passed in the tuple.
+    /// Writes an array `Data` items to disk based on the associated `CacheKey` passed in the tuple.
     /// - Parameters:
     ///   - dataAndKeys: An array of the tuple type (CacheKey, Data) to store multiple data items
     ///   with their associated keys at once.
@@ -114,6 +114,16 @@ public actor DiskStorage {
         }
     }
 
+    /// Removes `Data` items from disk based on the associated array of `CacheKey`s provided as a parameter.
+    /// - Parameters:
+    ///   - keys: A [CacheKey] for matching multiple `Data` items to their a location on disk.
+    ///   - subdirectory: An optional subdirectory the caller can remove a file from.
+    public func remove(keys: [CacheKey], subdirectory: String? = nil) throws {
+        for key in keys {
+            try self.remove(key: key, subdirectory: subdirectory)
+        }
+    }
+
     /// Removes all the data located at the `storagePath` or it's `subdirectory`.
     /// - subdirectory: An optional subdirectory the caller can remove a file from.
     public func removeAllData(inSubdirectory subdirectory: String? = nil) throws {
@@ -154,7 +164,7 @@ public actor DiskStorage {
 
         do {
             let directoryContents = try FileManager.default.contentsOfDirectory(at: directory, includingPropertiesForKeys: nil)
-            let fileOnlyKeys = directoryContents.filter({ !$0.hasDirectoryPath }).map(\.lastPathComponent)
+            let fileOnlyKeys = directoryContents.lazy.filter({ !$0.hasDirectoryPath }).map(\.lastPathComponent)
 
             return fileOnlyKeys.map(CacheKey.init(verbatim:))
         } catch {

@@ -25,14 +25,7 @@ final class DiskStorageTests: XCTestCase {
 
         try await storage.removeAllData()
 
-        let storedKeysAndData: [(key: CacheKey, data: Data)] = [
-            (CacheKey(verbatim: "1"), Data("Value 1".utf8)),
-            (CacheKey(verbatim: "2"), Data("Value 2".utf8)),
-            (CacheKey(verbatim: "3"), Data("Value 3".utf8)),
-            (CacheKey(verbatim: "4"), Data("Value 4".utf8))
-        ]
-
-        try await storage.write(storedKeysAndData)
+        try await storage.write(Self.storedKeysAndData)
 
         let itemCount = await storage.keyCount()
         XCTAssertEqual(itemCount, 4)
@@ -40,8 +33,8 @@ final class DiskStorageTests: XCTestCase {
         let readKeysAndObjects: [(key: CacheKey, data: Data)] = await storage.readAllDataAndKeys()
             .sorted(by: { String(data: $0.data, encoding: .utf8)! < String(data: $1.data, encoding: .utf8)! })
 
-        XCTAssertEqual(storedKeysAndData.map(\.key), readKeysAndObjects.map(\.key))
-        XCTAssertEqual(storedKeysAndData.map(\.data), readKeysAndObjects.map(\.data))
+        XCTAssertEqual(Self.storedKeysAndData.map(\.key), readKeysAndObjects.map(\.key))
+        XCTAssertEqual(Self.storedKeysAndData.map(\.data), readKeysAndObjects.map(\.data))
     }
 
     func testReadingDataSucceeds() async throws {
@@ -156,15 +149,28 @@ final class DiskStorageTests: XCTestCase {
     }
 
     func testRemoveDataSucceeds() async throws {
+        // Test removing an object based on it's key
         try await storage.write(Self.testData, key: Self.testCacheKey)
         let readData = await storage.read(key: Self.testCacheKey)
-
         XCTAssertNotNil(readData)
 
         try await storage.remove(key: Self.testCacheKey)
         let updatedData = await storage.read(key: Self.testCacheKey)
-
         XCTAssertNil(updatedData)
+
+        // Test removing multiple keys
+        let storedKeysAndData = Self.storedKeysAndData
+        try await storage.write(storedKeysAndData)
+
+        try await storage.remove(keys: [
+            storedKeysAndData[0].key,
+            storedKeysAndData[1].key,
+            storedKeysAndData[2].key,
+        ])
+
+        let allData = await storage.readAllDataAndKeys()
+        XCTAssertEqual(allData[0].key, storedKeysAndData[3].key)
+        XCTAssertEqual(allData[0].data, storedKeysAndData[3].data)
     }
 
     func testRemoveAllData() async throws {
@@ -324,6 +330,13 @@ private extension DiskStorageTests {
     static let testCacheKey = CacheKey(verbatim: "test-key")
     static let pathComponent = "Test"
     static let testStoragePath = DiskStorage.temporaryDirectory(appendingPath: DiskStorageTests.pathComponent)
+
+    static let storedKeysAndData: [(key: CacheKey, data: Data)] = [
+        (CacheKey(verbatim: "1"), Data("Value 1".utf8)),
+        (CacheKey(verbatim: "2"), Data("Value 2".utf8)),
+        (CacheKey(verbatim: "3"), Data("Value 3".utf8)),
+        (CacheKey(verbatim: "4"), Data("Value 4".utf8))
+    ]
 
     func writeItemsToDisk(count: Int, subdirectory: String? = nil) async throws {
         for i in 0..<count {
