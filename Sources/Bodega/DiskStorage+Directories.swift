@@ -32,4 +32,8 @@ public extension DiskStorage {
         FileManager.default.containerURL(forSecurityApplicationGroupIdentifier: identifier)!.appendingPathComponent(pathComponent)
     }
 
+    @available(macOS 11, *)
+    static func applicationSupportDirectory(appendingPath pathComponent: String) -> URL {
+        FileManager.default.urls(for: .applicationSupportDirectory, in: .userDomainMask).first!.appendingPathComponent(pathComponent)
+    }
 }
