@@ -257,41 +257,6 @@ final class ObjectStorageTests: XCTestCase {
         XCTAssertLessThanOrEqual(dateBefore, modificationDate!)
         XCTAssertLessThanOrEqual(modificationDate!, dateAfter)
     }
-    
-    func testAccessDate() async throws {
-        // Make sure the accessDate is nil if the key hasn't been stored
-        var accessDate = await storage.lastAccessed(forKey: Self.testCacheKey)
-        XCTAssertNil(accessDate)
-        
-        // Make sure the access date is in the right range if it has been stored
-        var dateBefore = Date()
-        try await storage.store(Self.testObject, forKey: Self.testCacheKey)
-        var dateAfter = Date()
-        accessDate = await storage.lastAccessed(forKey: Self.testCacheKey)
-        XCTAssertNotNil(accessDate)
-        XCTAssertLessThanOrEqual(dateBefore, accessDate!)
-        XCTAssertLessThanOrEqual(accessDate!, dateAfter)
-        
-        try await Task.sleep(nanoseconds: 1_000_000)
-        
-        // Make sure the access date is updated when the data is read
-        dateBefore = Date()
-        let object: CodableObject? = await storage.object(forKey: Self.testCacheKey)
-        dateAfter = Date()
-        XCTAssertEqual(object, Self.testObject)
-        accessDate = await storage.lastAccessed(forKey: Self.testCacheKey)
-        XCTAssertNotNil(accessDate)
-        XCTAssertLessThanOrEqual(dateBefore, accessDate!)
-        // Note that there is a slight delay between reading the data and the access time,
-        // so we need to allow for that.
-        XCTAssertLessThanOrEqual(accessDate!, dateAfter.addingTimeInterval(0.001))
-        
-        try await Task.sleep(nanoseconds: 1_000_000)
-        
-        // Make sure fetching the access date doesn't change the access date
-        let accessDate2 = await storage.lastAccessed(forKey: Self.testCacheKey)
-        XCTAssertEqual(accessDate, accessDate2)
-    }
 
 }
 
