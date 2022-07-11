@@ -22,9 +22,9 @@ final class ObjectStorageTests: XCTestCase {
         let updatedObject: CodableObject? = await storage.object(forKey: Self.testCacheKey)
 
         XCTAssertNotEqual(readObject, updatedObject)
+    }
 
-        try await storage.removeAllObjects()
-
+    func testWritingObjectsAndKeysSucceeds() async throws {
         try await storage.store(Self.storedKeysAndObjects)
 
         let objectCount = await storage.keyCount()
@@ -37,34 +37,31 @@ final class ObjectStorageTests: XCTestCase {
         XCTAssertEqual(Self.storedKeysAndObjects.map(\.object), readKeysAndObjects.map(\.object))
     }
 
-    func testReadingObjectsSucceeds() async throws {
+    func testReadingObjectSucceeds() async throws {
         // Read one object
         try await storage.store(Self.testObject, forKey: Self.testCacheKey)
         let readObject: CodableObject? = await storage.object(forKey: Self.testCacheKey)
         XCTAssertEqual(readObject, Self.testObject)
+    }
 
-        // Remove all the objects to create a clean slate
-        try await storage.removeAllObjects()
-
-        // Write some more test objects to a subdirectory
-        let subdirectory = "subdirectory"
-        try await self.writeObjectsToDisk(count: 10, subdirectory: subdirectory)
-        let keyCount = await storage.keyCount(inSubdirectory: subdirectory)
+    func testReadingArrayOfObjectsSucceds() async throws {
+        try await self.writeObjectsToDisk(count: 10)
+        let keyCount = await storage.keyCount()
         XCTAssertEqual(keyCount, 10)
 
         // Read an array of objects
-        let objects: [CodableObject] = await storage.objects(forKeys: [CacheKey(verbatim: "0"), CacheKey(verbatim: "1")], subdirectory: subdirectory)
+        let objects: [CodableObject] = await storage.objects(forKeys: [CacheKey(verbatim: "0"), CacheKey(verbatim: "1")])
         let objectValues = objects.map(\.value)
 
         XCTAssertEqual(objectValues, [
             "Value 0",
             "Value 1"
         ])
+    }
 
-        // Write some more test data to storage root
+    func testReadingObjectsAndKeysSucceeds() async throws {
         try await self.writeObjectsToDisk(count: 10)
 
-        // Read all data with method that also provides CacheKeys
         let allKeys = await storage.allKeys().sorted(by: { $0.value < $1.value })
         let lastTwoKeys = Array(allKeys.suffix(2))
         let lastTwoCacheKeysAndObjects: [(key: CacheKey, object: CodableObject)] = await storage.objectsAndKeys(keys: lastTwoKeys)
@@ -80,8 +77,11 @@ final class ObjectStorageTests: XCTestCase {
             "Value 8",
             "Value 9"
         ])
+    }
 
-        // Reading all objects
+    func testReadingAllObjectsSucceeds() async throws {
+        try await self.writeObjectsToDisk(count: 10)
+
         let allObjects: [CodableObject] = await storage.allObjects().sorted(by: { $0.value < $1.value })
 
         XCTAssertEqual(allObjects.count, 10)
@@ -96,8 +96,11 @@ final class ObjectStorageTests: XCTestCase {
             "Value 6",
             "Value 9"
         ])
+    }
 
-        // Reading all objects with the read method variant that also provides CacheKeys
+    func testReadingAllObjectsAndKeysSucceeds() async throws {
+        try await self.writeObjectsToDisk(count: 10)
+
         let allKeysAndObjects: [(key: CacheKey, object: CodableObject)] = await storage.allObjectsAndKeys()
         XCTAssertEqual(allKeysAndObjects.count, 10)
 
@@ -131,16 +134,6 @@ final class ObjectStorageTests: XCTestCase {
     func testReadingMissingObject() async throws {
         let readObject: CodableObject? = await storage.object(forKey: Self.testCacheKey)
         XCTAssertNil(readObject)
-    }
-
-    func testSubdirectoryResolves() async throws {
-        try await storage.store(Self.testObject, forKey: Self.testCacheKey, subdirectory: "test-subdirectory")
-        let readObject: CodableObject? = await storage.object(forKey: Self.testCacheKey, subdirectory: "test-subdirectory")
-
-        XCTAssertEqual(readObject, Self.testObject)
-
-        let incorrectSubdirectoryObject: CodableObject? = await storage.object(forKey: Self.testCacheKey, subdirectory: "fake-subdirectory")
-        XCTAssertNil(incorrectSubdirectoryObject)
     }
 
     func testRemoveObjectSucceeds() async throws {
@@ -187,16 +180,6 @@ final class ObjectStorageTests: XCTestCase {
         try await storage.removeAllObjects()
         let updatedKeyCount = await storage.allKeys().count
         XCTAssertEqual(updatedKeyCount, 0)
-
-        let subdirectory = "subdirectory"
-        try await storage.store(Self.testObject, forKey: Self.testCacheKey, subdirectory: subdirectory)
-
-        let subdirectoryKeyCount = await storage.allKeys(inSubdirectory: subdirectory).count
-        XCTAssertEqual(subdirectoryKeyCount, 1)
-
-        try await storage.removeAllObjects()
-        let updatedSubdirectoryKeyCount = await storage.allKeys(inSubdirectory: subdirectory).count
-        XCTAssertEqual(updatedSubdirectoryKeyCount, 0)
     }
 
     func testKeyCount() async throws {
@@ -212,16 +195,6 @@ final class ObjectStorageTests: XCTestCase {
         try await self.writeObjectsToDisk(count: 10)
         let overwrittenKeyCount = await storage.keyCount()
         XCTAssertEqual(overwrittenKeyCount, 10)
-
-        let subdirectory = "subdirectory"
-        try await storage.store(Self.testObject, forKey: Self.testCacheKey, subdirectory: subdirectory)
-
-        let subdirectoryKeyCount = await storage.allKeys(inSubdirectory: subdirectory).count
-        XCTAssertEqual(subdirectoryKeyCount, 1)
-
-        // Ensure that subdirectories are not treated as additional keys
-        let directoryAfterAddingSubdirectoryKeyCount = await storage.allKeys().count
-        XCTAssertEqual(directoryAfterAddingSubdirectoryKeyCount, 10)
     }
 
     func testAllKeys() async throws {
@@ -340,9 +313,9 @@ private extension ObjectStorageTests {
         (CacheKey(verbatim: "4"), CodableObject(value: "Value 4"))
     ]
 
-    func writeObjectsToDisk(count: Int, subdirectory: String? = nil) async throws {
+    func writeObjectsToDisk(count: Int) async throws {
         for i in 0..<count {
-            try await storage.store(CodableObject(value: "Value \(i)"), forKey: CacheKey(verbatim: "\(i)"), subdirectory: subdirectory)
+            try await storage.store(CodableObject(value: "Value \(i)"), forKey: CacheKey(verbatim: "\(i)"))
         }
     }
 
