@@ -4,30 +4,31 @@ public actor ObjectStorage {
 
     private let storage: DiskStorage
 
-    /// Initializes a new `ObjectStorage` for persisting `Object`s to disk.
-    /// - Parameter storagePath: A URL representing the folder on disk that your objects will be written to.
     // A property for performance reasons, to avoid creating a new encoder on every write, N times for array-based methods.
     private let encoder = JSONEncoder()
 
     // A property for performance reasons, to avoid creating a new decoder on every read, N times for array-based methods.
     private let decoder = JSONDecoder()
+
+    /// Initializes a new `ObjectStorage` for persisting `Object`s.
+    /// - Parameter storagePath: A URL representing the location your objects will be written to.
     /// Constructed as a URL for those that wish to use features like shared containers,
     /// rather than as traditionally in the Documents or Caches directory.
     public init(storagePath: URL) {
         self.storage = DiskStorage(storagePath: storagePath)
     }
 
-    /// Writes an `Object` to disk based on the associated `CacheKey`.
+    /// Writes an `Object` based on the associated `CacheKey`.
     /// - Parameters:
-    ///   - object: The object being stored to disk.
-    ///   - key: A `CacheKey` for matching `Object` to a location on disk.
+    ///   - object: The object being stored.
+    ///   - key: A `CacheKey` for matching an `Object`.
     public func store<Object: Codable>(_ object: Object, forKey key: CacheKey) async throws {
         let data = try self.encoder.encode(object)
 
         return try await storage.write(data, key: key)
     }
 
-    /// Writes an array of `[Object]`s to disk based on the associated `CacheKey` passed in the tuple.
+    /// Writes an array of `[Object]`s based on the associated `CacheKey` passed in the tuple.
     /// - Parameters:
     ///   - objectsAndKeys: An array of `[(CacheKey, Object)]` to store
     ///   multiple objects with their associated keys at once.
@@ -37,20 +38,20 @@ public actor ObjectStorage {
         try await storage.write(dataAndKeys)
     }
 
-    /// Reads an `Object` from disk based on the associated `CacheKey`.
+    /// Reads an `Object` based on the associated `CacheKey`.
     /// - Parameters:
-    ///   - key: A `CacheKey` for matching an `Object` to a location on disk.
-    /// - Returns: The object stored on disk if it exists, nil if there is no `Object` stored for the `CacheKey`.
+    ///   - key: A `CacheKey` for matching an `Object`.
+    /// - Returns: The object stored if it exists, nil if there is no `Object` stored for the `CacheKey`.
     public func object<Object: Codable>(forKey key: CacheKey) async -> Object? {
         guard let data = await storage.read(key: key) else { return nil }
 
         return try? self.decoder.decode(Object.self, from: data)
     }
 
-    /// Reads `Object`s from disk based on the associated array of `CacheKey`s provided as a parameter.
+    /// Reads `Object`s based on the associated array of `CacheKey`s provided as a parameter.
     /// - Parameters:
-    ///   - keys: A `[CacheKey]` for matching multiple `Object`s to their a location on disk.
-    /// - Returns: An array of `[Object]`s stored on disk if the `CacheKey`s exist,
+    ///   - keys: A `[CacheKey]` for matching multiple `Object`s.
+    /// - Returns: An array of `[Object]`s stored if the `CacheKey`s exist,
     /// and an `[]` if there are no `Object`s matching the `keys` passed in.
     public func objects<Object: Codable>(forKeys keys: [CacheKey]) async -> [Object] {
         let dataItems = await storage.read(keys: keys)
@@ -62,7 +63,7 @@ public actor ObjectStorage {
         }
     }
 
-    /// Reads `Object`s from disk based on the associated array of `CacheKey`s provided as a parameter
+    /// Reads `Object`s based on the associated array of `CacheKey`s provided as a parameter
     /// and returns an array `[(CacheKey, Object)]` associated with the passed in `CacheKey`s.
     ///
     /// This method returns the `CacheKey` and `Object` together in a tuple of `[(CacheKey, Object)]`
@@ -70,8 +71,8 @@ public actor ObjectStorage {
     /// This can be useful in allowing manual iteration over `Object`s, but if you don't need to know
     /// which `CacheKey` that led to an `Object` being retrieved you can use ``objects(forKeys:)`` instead.
     /// - Parameters:
-    ///   - keys: A `[CacheKey]` for matching multiple `Object`s to their a location on disk.
-    /// - Returns: An array of `[(CacheKey, Object)]` read from disk if it exists,
+    ///   - keys: A `[CacheKey]` for matching multiple `Object`s.
+    /// - Returns: An array of `[(CacheKey, Object)]` read if it exists,
     /// and an empty array if there are no `Objects`s matching the `keys` passed in.
     public func objectsAndKeys<Object: Codable>(keys: [CacheKey]) async -> [(key: CacheKey, object: Object)] {
         return zip(
@@ -101,16 +102,16 @@ public actor ObjectStorage {
         return await self.objectsAndKeys(keys: allKeys)
     }
 
-    /// Removes an `Object` from disk based on the the associated `CacheKey`.
+    /// Removes an `Object` based on the the associated `CacheKey`.
     /// - Parameters:
-    ///   - key: A `CacheKey` for matching `Object` to a location on disk.
+    ///   - key: A `CacheKey` for matching an `Object`.
     public func removeObject(forKey key: CacheKey) async throws {
         try await storage.remove(key: key)
     }
 
-    /// Removes `[Object]`s from disk based on the associated array of `[CacheKey]`s provided as a parameter.
+    /// Removes `[Object]`s from the underlying Storage based on the associated array of `[CacheKey]`s provided as a parameter.
     /// - Parameters:
-    ///   - keys: A `[CacheKey]` for matching multiple `Object`s to their a location on disk.
+    ///   - keys: A `[CacheKey]` for matching multiple `Object`s.
     public func removeObject(forKeys keys: [CacheKey]) async throws {
         for key in keys {
             try await storage.remove(key: key)
@@ -136,17 +137,17 @@ public actor ObjectStorage {
 
     /// Returns the date of creation for the object represented by the `CacheKey`, if it exists.
     /// - Parameters:
-    ///   - key: A `CacheKey` for matching an `Object` to a location on disk.
-    /// - Returns: The creation date of the `Object` on disk if it exists, nil if there is no `Object` stored for the `CacheKey`.
+    ///   - key: A `CacheKey` for matching an `Object`.
+    /// - Returns: The creation date of the `Object` if it exists, nil if there is no `Object` stored for the `CacheKey`.
     public func creationDate(forKey key: CacheKey, subdirectory: String? = nil) async -> Date? {
         return await storage.createdAt(key: key)
     }
 
     /// Returns the modification date for the object represented by the `CacheKey`, if it exists.
     /// - Parameters:
-    ///   - key: A `CacheKey` for matching an `Object` to a location on disk.
+    ///   - key: A `CacheKey` for matching an `Object`.
     ///   - subdirectory: An optional subdirectory the caller can read from.
-    /// - Returns: The modification date of the object on disk if it exists, nil if there is no object stored for the `CacheKey`.
+    /// - Returns: The modification date of the object if it exists, nil if there is no object stored for the `CacheKey`.
     public func lastModified(forKey key: CacheKey) async -> Date? {
         return await storage.lastModified(key: key)
     }
