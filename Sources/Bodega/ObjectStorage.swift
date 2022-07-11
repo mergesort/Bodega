@@ -14,8 +14,8 @@ public actor ObjectStorage {
     /// - Parameter storagePath: A URL representing the location your objects will be written to.
     /// Constructed as a URL for those that wish to use features like shared containers,
     /// rather than as traditionally in the Documents or Caches directory.
-    public init(storagePath: URL) {
-        self.storage = DiskStorage(storagePath: storagePath)
+    public init(directory: FileManager.Directory) {
+        self.storage = DiskStorage(directory: directory)
     }
 
     /// Writes an `Object` based on the associated `CacheKey`.

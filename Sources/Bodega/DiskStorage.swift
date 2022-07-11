@@ -7,8 +7,8 @@ public actor DiskStorage {
     /// Initializes a new `DiskStorage` object for persisting `Data` to disk.
     /// - Parameter storagePath: A URL representing the folder on disk that your files will be written to.
     /// Constructed as a URL for those that wish to use features like shared containers, rather than as traditionally in the Documents or Caches directory.
-    public init(storagePath: URL) {
-        self.folder = storagePath
+    public init(directory: FileManager.Directory) {
+        self.folder = directory.url
     }
 
     /// Writes `Data` to disk based on the associated `CacheKey`.
