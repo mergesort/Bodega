@@ -139,15 +139,6 @@ public actor ObjectStorage {
         return await storage.createdAt(key: key)
     }
 
-    /// Returns the last access date of the object for the `CacheKey`, if it exists.
-    /// - Parameters:
-    ///   - key: A `CacheKey` for matching an `Object` to a location on disk.
-    ///   - subdirectory: An optional subdirectory the caller can read from.
-    /// - Returns: The last access date of the object on disk if it exists, nil if there is no object stored for the `CacheKey`.
-    public func lastAccessed(forKey key: CacheKey, subdirectory: String? = nil) async -> Date? {
-        return await storage.lastAccessed(key: key)
-    }
-
     /// Returns the modification date for the object represented by the `CacheKey`, if it exists.
     /// - Parameters:
     ///   - key: A `CacheKey` for matching an `Object` to a location on disk.
