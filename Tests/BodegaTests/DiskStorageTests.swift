@@ -6,7 +6,7 @@ final class DiskStorageTests: XCTestCase {
     private var storage: DiskStorage!
 
     override func setUp() async throws {
-        storage = DiskStorage(directory: Self.testDirectory)
+        storage = DiskStorage(directory: .temporary(appendingPath: "Tests"))
         try await storage.removeAllData()
     }
 
@@ -299,8 +299,6 @@ private extension DiskStorageTests {
 
     static let testData = Data("Test".utf8)
     static let testCacheKey = CacheKey(verbatim: "test-key")
-    static let pathComponent = "Test"
-    static let testDirectory = FileManager.Directory.temporary(appendingPath: DiskStorageTests.pathComponent)
 
     static let storedKeysAndData: [(key: CacheKey, data: Data)] = [
         (CacheKey(verbatim: "1"), Data("Value 1".utf8)),

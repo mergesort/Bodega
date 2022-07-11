@@ -30,10 +30,7 @@ Bodega provides two kinds of storage for you, `DiskStorage` and `ObjectStorage`.
 ```swift
 // Initialize a DiskStorage object
 let storage = DiskStorage(
-    storagePath: FileManager.default
-        .urls(for: .documentDirectory, in: .userDomainMask)
-        .first!
-        .appendingPathComponent("Quotes")
+    directory: .documents(appendingPath: "Quotes")
 )
 
 // CacheKeys can be generated from a String or URL.
@@ -61,10 +58,7 @@ try await storage.remove(key: Self.testCacheKey)
 ```swift
 // Initialize an ObjectStorage object
 let storage = ObjectStorage(
-    storagePath: FileManager.default
-        .urls(for: .documentDirectory, in: .userDomainMask)
-        .first!
-        .appendingPathComponent("Quotes")
+    directory: .documents(appendingPath: "Quotes")
 )
 
 let cacheKey = CacheKey("churchill-optimisim")
