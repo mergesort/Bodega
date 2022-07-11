@@ -6,6 +6,11 @@ public actor ObjectStorage {
 
     /// Initializes a new `ObjectStorage` for persisting `Object`s to disk.
     /// - Parameter storagePath: A URL representing the folder on disk that your objects will be written to.
+    // A property for performance reasons, to avoid creating a new encoder on every write, N times for array-based methods.
+    private let encoder = JSONEncoder()
+
+    // A property for performance reasons, to avoid creating a new decoder on every read, N times for array-based methods.
+    private let decoder = JSONDecoder()
     /// Constructed as a URL for those that wish to use features like shared containers,
     /// rather than as traditionally in the Documents or Caches directory.
     public init(storagePath: URL) {
@@ -17,7 +22,7 @@ public actor ObjectStorage {
     ///   - object: The object being stored to disk.
     ///   - key: A `CacheKey` for matching `Object` to a location on disk.
     public func store<Object: Codable>(_ object: Object, forKey key: CacheKey) async throws {
-        let data = try JSONEncoder().encode(object)
+        let data = try self.encoder.encode(object)
 
         return try await storage.write(data, key: key)
     }
@@ -27,8 +32,7 @@ public actor ObjectStorage {
     ///   - objectsAndKeys: An array of `[(CacheKey, Object)]` to store
     ///   multiple objects with their associated keys at once.
     public func store<Object: Codable>(_ objectsAndKeys: [(key: CacheKey, object: Object)]) async throws {
-        let encoder = JSONEncoder()
-        let dataAndKeys = try objectsAndKeys.map({ try ($0.key, encoder.encode($0.object)) })
+        let dataAndKeys = try objectsAndKeys.map({ try ($0.key, self.encoder.encode($0.object)) })
 
         try await storage.write(dataAndKeys)
     }
@@ -40,7 +44,7 @@ public actor ObjectStorage {
     public func object<Object: Codable>(forKey key: CacheKey) async -> Object? {
         guard let data = await storage.read(key: key) else { return nil }
 
-        return try? JSONDecoder().decode(Object.self, from: data)
+        return try? self.decoder.decode(Object.self, from: data)
     }
 
     /// Reads `Object`s from disk based on the associated array of `CacheKey`s provided as a parameter.
@@ -50,10 +54,9 @@ public actor ObjectStorage {
     /// and an `[]` if there are no `Object`s matching the `keys` passed in.
     public func objects<Object: Codable>(forKeys keys: [CacheKey]) async -> [Object] {
         let dataItems = await storage.read(keys: keys)
-        let decoder = JSONDecoder()
 
         do {
-            return try dataItems.map({ try decoder.decode(Object.self, from: $0) })
+            return try dataItems.map({ try self.decoder.decode(Object.self, from: $0) })
         } catch {
             return []
         }
