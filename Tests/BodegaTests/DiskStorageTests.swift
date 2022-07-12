@@ -6,7 +6,7 @@ final class DiskStorageTests: XCTestCase {
     private var storage: DiskStorage!
 
     override func setUp() async throws {
-        storage = DiskStorage(storagePath: Self.testStoragePath)
+        storage = DiskStorage(directory: .temporary(appendingPath: "Tests"))
         try await storage.removeAllData()
     }
 
@@ -17,14 +17,14 @@ final class DiskStorageTests: XCTestCase {
         XCTAssertEqual(readData, Self.testData)
 
         // Test overwriting data
-        let updatedTestData = Data("Updated Test Data".utf8)
+        let updatedTestData = Data("updated-data".utf8)
         try await storage.write(updatedTestData, key: Self.testCacheKey)
         let updatedData = await storage.read(key: Self.testCacheKey)
 
         XCTAssertNotEqual(readData, updatedData)
+    }
 
-        try await storage.removeAllData()
-
+    func testWritingDataAndKeysSucceeds() async throws {
         try await storage.write(Self.storedKeysAndData)
 
         let itemCount = await storage.keyCount()
@@ -38,34 +38,29 @@ final class DiskStorageTests: XCTestCase {
     }
 
     func testReadingDataSucceeds() async throws {
-        // Read one piece of data
         try await storage.write(Self.testData, key: Self.testCacheKey)
         let readData = await storage.read(key: Self.testCacheKey)
         XCTAssertEqual(readData, Self.testData)
+    }
 
-        // Remove all the data to create a clean slate
-        try await storage.removeAllData()
-
-        // Write some test data to a subdirectory
-        let subdirectory = "subdirectory"
-        try await self.writeItemsToDisk(count: 10, subdirectory: subdirectory)
-        let keyCount = await storage.keyCount(inSubdirectory: subdirectory)
+    func testReadingArrayOfDataSucceeds() async throws {
+        try await self.writeItemsToDisk(count: 10)
+        let keyCount = await storage.keyCount()
         XCTAssertEqual(keyCount, 10)
 
-        // Read an array of data
-        let firstTwoValues = await storage.read(keys: [CacheKey(verbatim: "0"), CacheKey(verbatim: "1")], subdirectory: subdirectory)
+        let firstTwoValues = await storage.read(keys: [CacheKey(verbatim: "0"), CacheKey(verbatim: "1")])
         let firstTwoStrings = firstTwoValues.map({ String(data: $0, encoding: .utf8) })
 
         XCTAssertEqual(firstTwoStrings, [
             "Value 0",
             "Value 1"
         ])
+    }
 
-        // Write some more test data to storage root
+    func testReadingDataAndKeysSucceeds() async throws {
         try await self.writeItemsToDisk(count: 10)
         let allKeys = await storage.allKeys().sorted(by: { $0.value < $1.value })
 
-        // Read all data with method that also provides CacheKeys
         let lastTwoKeys = Array(allKeys.suffix(2))
         let lastTwoKeysAndData = await storage.readDataAndKeys(keys: lastTwoKeys)
 
@@ -80,8 +75,11 @@ final class DiskStorageTests: XCTestCase {
             "Value 8",
             "Value 9"
         ])
+    }
 
-        // Reading all data
+    func testReadingAllDataSucceeds() async throws {
+        try await self.writeItemsToDisk(count: 10)
+
         let allData = await storage.readAllData()
         let allStrings = allData
             .map({ String(data: $0, encoding: .utf8)! })
@@ -99,8 +97,11 @@ final class DiskStorageTests: XCTestCase {
             "Value 6",
             "Value 9"
         ])
+    }
 
-        // Reading all data with the read method variant that also provides CacheKeys
+    func testReadingAllDataAndKeysSucceeds() async throws {
+        try await self.writeItemsToDisk(count: 10)
+
         let allKeysAndData = await storage.readAllDataAndKeys()
         XCTAssertEqual(allKeysAndData.count, 10)
 
@@ -138,16 +139,6 @@ final class DiskStorageTests: XCTestCase {
         XCTAssertNil(readData)
     }
 
-    func testSubdirectoryResolves() async throws {
-        try await storage.write(Self.testData, key: Self.testCacheKey, subdirectory: "test-subdirectory")
-        let readData = await storage.read(key: Self.testCacheKey, subdirectory: "test-subdirectory")
-
-        XCTAssertEqual(readData, Self.testData)
-
-        let incorrectSubdirectoryData = await storage.read(key: Self.testCacheKey, subdirectory: "fake-subdirectory")
-        XCTAssertNil(incorrectSubdirectoryData)
-    }
-
     func testRemoveDataSucceeds() async throws {
         // Test removing an object based on it's key
         try await storage.write(Self.testData, key: Self.testCacheKey)
@@ -181,16 +172,6 @@ final class DiskStorageTests: XCTestCase {
         try await storage.removeAllData()
         let updatedKeyCount = await storage.keyCount()
         XCTAssertEqual(updatedKeyCount, 0)
-
-        let subdirectory = "subdirectory"
-        try await storage.write(Self.testData, key: Self.testCacheKey, subdirectory: subdirectory)
-
-        let subdirectoryKeyCount = await storage.keyCount(inSubdirectory: subdirectory)
-        XCTAssertEqual(subdirectoryKeyCount, 1)
-
-        try await storage.removeAllData()
-        let updatedSubdirectoryKeyCount = await storage.keyCount(inSubdirectory: subdirectory)
-        XCTAssertEqual(updatedSubdirectoryKeyCount, 0)
     }
 
     func testRemovingNonExistentObjectDoesNotError() async throws {
@@ -214,16 +195,6 @@ final class DiskStorageTests: XCTestCase {
         try await self.writeItemsToDisk(count: 10)
         let overwrittenKeyCount = await storage.keyCount()
         XCTAssertEqual(overwrittenKeyCount, 10)
-
-        let subdirectory = "subdirectory"
-        try await storage.write(Self.testData, key: Self.testCacheKey, subdirectory: subdirectory)
-
-        let subdirectoryKeyCount = await storage.keyCount(inSubdirectory: subdirectory)
-        XCTAssertEqual(subdirectoryKeyCount, 1)
-
-        // Ensure that subdirectories are not treated as additional keys
-        let directoryAfterAddingSubdirectoryKeyCount = await storage.keyCount()
-        XCTAssertEqual(directoryAfterAddingSubdirectoryKeyCount, 10)
     }
 
     func testAllKeys() async throws {
@@ -328,8 +299,6 @@ private extension DiskStorageTests {
 
     static let testData = Data("Test".utf8)
     static let testCacheKey = CacheKey(verbatim: "test-key")
-    static let pathComponent = "Test"
-    static let testStoragePath = DiskStorage.temporaryDirectory(appendingPath: DiskStorageTests.pathComponent)
 
     static let storedKeysAndData: [(key: CacheKey, data: Data)] = [
         (CacheKey(verbatim: "1"), Data("Value 1".utf8)),
@@ -338,10 +307,10 @@ private extension DiskStorageTests {
         (CacheKey(verbatim: "4"), Data("Value 4".utf8))
     ]
 
-    func writeItemsToDisk(count: Int, subdirectory: String? = nil) async throws {
+    func writeItemsToDisk(count: Int) async throws {
         for i in 0..<count {
             // This encoding could fail in some use cases but we're going to use very simple strings for testing
-            try await storage.write("Value \(i)".data(using: .utf8)!, key: CacheKey(verbatim: "\(i)"), subdirectory: subdirectory)
+            try await storage.write("Value \(i)".data(using: .utf8)!, key: CacheKey(verbatim: "\(i)"))
         }
     }
 

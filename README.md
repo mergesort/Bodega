@@ -21,9 +21,7 @@ Bodega is a straightforward actor-based library for writing files to disk with a
 
 ### Getting Started
 
-Bodega provides two kinds of storage for you, `DiskStorage` and `ObjectStorage`. `DiskStorage` is for writing `Data` to disk, and `ObjectStorage` builds upon `DiskStorage` allowing you to write any `Codable` object to disk using a very similar API.
-
-Both `DiskStorage` and `ObjectStorage` are implemented as actors which means they take care of properly synchronizing disk reads and writes. Until Swift implements [custom executors](https://forums.swift.org/t/support-custom-executors-in-swift-concurrency/44425) there will probably be a small performance penalty when using `ObjectStorage` since one actor has to talk to another, but in limited usage and performance profiling I have noticed no performance issues. No promises though!
+Bodega provides two kinds of storage for you, `DiskStorage` and `ObjectStorage`. `DiskStorage` is for writing `Data` to disk, and `ObjectStorage` builds upon `DiskStorage` allowing you to save any `Codable` object using a very similar API.
 
 ---
 
@@ -32,10 +30,7 @@ Both `DiskStorage` and `ObjectStorage` are implemented as actors which means the
 ```swift
 // Initialize a DiskStorage object
 let storage = DiskStorage(
-    storagePath: FileManager.default
-        .urls(for: .documentDirectory, in: .userDomainMask)
-        .first!
-        .appendingPathComponent("Quotes")
+    directory: .documents(appendingPath: "Quotes")
 )
 
 // CacheKeys can be generated from a String or URL.
@@ -61,12 +56,9 @@ try await storage.remove(key: Self.testCacheKey)
 `ObjectStorage` has a very similar API to `DiskStorage`, but with slight naming deviations to be more explicit that you're working with objects and not data.
 
 ```swift
-// Initialize a DiskStorage object
+// Initialize an ObjectStorage object
 let storage = ObjectStorage(
-    storagePath: FileManager.default
-        .urls(for: .documentDirectory, in: .userDomainMask)
-        .first!
-        .appendingPathComponent("Quotes")
+    directory: .documents(appendingPath: "Quotes")
 )
 
 let cacheKey = CacheKey("churchill-optimisim")
@@ -78,10 +70,10 @@ let quote = Quote(
     url: URL(string: "https://redpanda.club/dope-quotes/winston-churchill")
 )
 
-// Store an object to disk
+// Store an object
 try await storage.store(quote, forKey: cacheKey)
 
-// Read an object from disk
+// Read an object
 let readObject: Quote? = await storage.object(forKey: cacheKey)
 
 // Grab all the keys, which at this point will be one key, `cacheKey`.
@@ -90,7 +82,7 @@ let allKeys = await storage.allKeys()
 // Verify by calling `keyCount`, both key-related methods are also available on `DiskStorage`.
 await storage.keyCount()
 
-// Remove an object from disk
+// Remove an object
 try await storage.removeObject(forKey: cacheKey)
 ```
 
