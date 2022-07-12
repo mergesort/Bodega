@@ -1,14 +1,16 @@
 import Foundation
 
-public actor DiskStorage {
+public actor DiskStorageEngine: StorageEngine {
 
-    private let folder: URL
+    /// A directory on the filesystem where your `StorageEngine`s data will be stored.
+    public var directory: FileManager.Directory
 
-    /// Initializes a new `DiskStorage` object for persisting `Data` to disk.
-    /// - Parameter storagePath: A URL representing the folder on disk that your files will be written to.
-    /// Constructed as a URL for those that wish to use features like shared containers, rather than as traditionally in the Documents or Caches directory.
+    /// Initializes a new `DiskStorageEngine` object for persisting `Data` to disk.
+    /// - Parameter directory: A directory on the filesystem where your files will be written to.
+    /// `FileManager.Directory` is a type-safe wrapper around URL that provides sensible defaults like
+    ///  `.documents(appendingPath:)`, `.caches(appendingPath:)`, and more.
     public init(directory: FileManager.Directory) {
-        self.folder = directory.url
+        self.directory = directory
     }
 
     /// Writes `Data` to disk based on the associated `CacheKey`.
@@ -46,7 +48,7 @@ public actor DiskStorage {
 
     /// Reads `Data` items from disk based on the associated array of `CacheKey`s provided as a parameter.
     /// - Parameters:
-    ///   - keys: A `[CacheKey]` for matching multiple `Codable` objects to their a location on disk.
+    ///   - keys: A `[CacheKey]` for matching multiple `Data` items to their a location on disk.
     /// - Returns: An array of `[Data]` stored on disk if the `CacheKey`s exist,
     /// and an `[]` if there is no `Data` matching the `keys` passed in.
     public func read(keys: [CacheKey]) -> [Data] {
@@ -72,14 +74,14 @@ public actor DiskStorage {
         ).map { ($0, $1) }
     }
 
-    /// Reads all the `[Data]` located at the `storagePath`.
+    /// Reads all the `[Data]` located in the `directory`.
     /// - Returns: An array of the `[Data]` contained in a directory.
     public func readAllData() -> [Data] {
         let allKeys = self.allKeys()
         return self.read(keys: allKeys)
     }
 
-    /// Reads all the `Data` located at the `storagePath` and returns an array
+    /// Reads all the `Data` located in the `directory` and returns an array
     /// of `[(CacheKey, Data)]` tuples associated with the `CacheKey`.
     ///
     /// This method returns the `CacheKey` and `Data` together in an array of `[(CacheKey, Data)]`
@@ -115,7 +117,7 @@ public actor DiskStorage {
         }
     }
 
-    /// Removes all the `Data` items located at the `storagePath`.
+    /// Removes all the `Data` items located in the `directory`.
     public func removeAllData() throws {
         do {
             try FileManager.default.removeItem(at: self.folder)
@@ -126,13 +128,13 @@ public actor DiskStorage {
         }
     }
 
-    /// Iterates through a directory to find the total number of files.
+    /// Iterates through a directory to find the total number of `Data` items.
     /// - Returns: The file/key count.
     public func keyCount() -> Int {
         return self.allKeys().count
     }
 
-    /// Iterates through `storagePath` to find all of the files and their respective keys.
+    /// Iterates through a `directory` to find all of the keys.
     /// - Returns: An array of the keys contained in a directory.
     public func allKeys() -> [CacheKey] {
         do {
@@ -167,14 +169,14 @@ public actor DiskStorage {
     /// - Parameters:
     ///   - key: A `CacheKey` for matching `Data` to a location on disk.
     /// - Returns: The modification date of the `Data` on disk if it exists, nil if there is no `Data` stored for the `CacheKey`.
-    public func lastModified(key: CacheKey) -> Date? {
+    public func updatedAt(key: CacheKey) -> Date? {
         return try? self.concatenatedPath(key: key.value)
             .resourceValues(forKeys: [.contentModificationDateKey]).contentModificationDate
     }
 
 }
 
-private extension DiskStorage {
+private extension DiskStorageEngine {
 
     static func createDirectory(url: URL) throws {
         try FileManager.default

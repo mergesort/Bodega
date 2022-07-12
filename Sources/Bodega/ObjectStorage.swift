@@ -2,7 +2,7 @@ import Foundation
 
 public actor ObjectStorage {
 
-    private let storage: DiskStorage
+    private let storage: StorageEngine
 
     // A property for performance reasons, to avoid creating a new encoder on every write, N times for array-based methods.
     private let encoder = JSONEncoder()
@@ -10,12 +10,25 @@ public actor ObjectStorage {
     // A property for performance reasons, to avoid creating a new decoder on every read, N times for array-based methods.
     private let decoder = JSONDecoder()
 
-    /// Initializes a new `ObjectStorage` for persisting `Object`s.
-    /// - Parameter storagePath: A URL representing the location your objects will be written to.
-    /// Constructed as a URL for those that wish to use features like shared containers,
-    /// rather than as traditionally in the Documents or Caches directory.
-    public init(directory: FileManager.Directory) {
-        self.storage = DiskStorage(directory: directory)
+    /// Initializes a new `ObjectStorage` object for persisting `Object`s.
+    ///
+    /// An `ObjectStorage` is a higher level abstraction than a `StorageEngine`, allowing you
+    /// to interact with Swift objects, never thinking about the persistence layer that's saving
+    /// objects under the hood.
+    ///
+    /// If you do not provide a `StorageEngine` parameter then `ObjectStorage` will default to
+    /// creating a ``SQLiteStorageEngine``, with a database located in the app's Documents directory.
+    ///
+    /// The `SQLiteStorageEngine` is a safe, fast, and easy database to based on SQLite,
+    /// but if you prefer to use your own persistence layer or want to save your objects
+    /// to another location, you can use the `storage` parameter like so
+    /// ```
+    /// SQLiteStorageEngine(directory: .documents(appendingPath: "My Location"))
+    /// ```
+    /// - Parameter storage: A `StorageEngine` to initialize an `ObjectStorage` instance with.
+    /// If no parameter is provided the default is `SQLiteStorageEngine(directory: .documents(appendingPath: ""))`
+    public init(storage: StorageEngine = SQLiteStorageEngine(directory: .documents(appendingPath: ""))!) {
+        self.storage = storage
     }
 
     /// Writes an `Object` based on the associated `CacheKey`.
@@ -81,14 +94,14 @@ public actor ObjectStorage {
         ).map { ($0, $1) }
     }
 
-    /// Reads all `[Object]` objects located at the `storagePath`.
+    /// Reads all `[Object]` objects.
     /// - Returns: An array of `[Object]`s contained in a directory.
     public func allObjects<Object: Codable>() async -> [Object] {
         let allKeys = await self.allKeys()
         return await self.objects(forKeys: allKeys)
     }
 
-    /// Reads all the objects located at the `storagePath` and returns an array
+    /// Reads all of the objects and returns an array
     /// of `[(CacheKey, Object)]` associated with the `CacheKey`.
     ///
     /// This method returns the `CacheKey` and `Object` together in an array of `[(CacheKey, Object)]`
@@ -118,7 +131,7 @@ public actor ObjectStorage {
         }
     }
 
-    /// Removes all the objects located at the `storagePath`.
+    /// Removes all of the `Object`s.
     public func removeAllObjects() async throws {
         try await storage.removeAllData()
     }
@@ -129,7 +142,7 @@ public actor ObjectStorage {
         return await storage.keyCount()
     }
 
-    /// Iterates through the `storagePath` to find all of the objects and their respective keys.
+    /// Iterates through the `ObjectStorage` to find all of the `Object`s keys.
     /// - Returns: An array of the keys contained in a directory.
     public func allKeys() async -> [CacheKey] {
         return await storage.allKeys()
@@ -148,8 +161,8 @@ public actor ObjectStorage {
     ///   - key: A `CacheKey` for matching an `Object`.
     ///   - subdirectory: An optional subdirectory the caller can read from.
     /// - Returns: The modification date of the object if it exists, nil if there is no object stored for the `CacheKey`.
-    public func lastModified(forKey key: CacheKey) async -> Date? {
-        return await storage.lastModified(key: key)
+    public func updatedAt(forKey key: CacheKey) async -> Date? {
+        return await storage.updatedAt(key: key)
     }
 
 }

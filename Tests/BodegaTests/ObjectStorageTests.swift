@@ -5,8 +5,19 @@ final class ObjectStorageTests: XCTestCase {
 
     private var storage: ObjectStorage!
 
+    private var diskBackedObjectStorage: ObjectStorage!
+    private var sqliteBackedObjectStorage: ObjectStorage!
+
     override func setUp() async throws {
-        storage = ObjectStorage(directory: .temporary(appendingPath: "Tests"))
+        let diskStorage = DiskStorageEngine(directory: .temporary(appendingPath: "FileSystemTests"))
+        let sqliteStorage = SQLiteStorageEngine(directory: .temporary(appendingPath: "SQLiteTests"))!
+
+        // Remove this soon
+        storage = ObjectStorage(storage: diskStorage)
+
+        diskBackedObjectStorage = ObjectStorage(storage: diskStorage)
+        sqliteBackedObjectStorage = ObjectStorage(storage: sqliteStorage)
+
         try await storage.removeAllObjects()
     }
 
@@ -232,16 +243,16 @@ final class ObjectStorageTests: XCTestCase {
         XCTAssertLessThanOrEqual(creationDate!, dateAfter)
     }
 
-    func testModificationDate() async throws {
+    func testUpdatedAtDate() async throws {
         // Make sure the modificationDate is nil if the key hasn't been stored
-        var modificationDate = await storage.lastModified(forKey: Self.testCacheKey)
+        var modificationDate = await storage.updatedAt(forKey: Self.testCacheKey)
         XCTAssertNil(modificationDate)
         
         // Make sure the modification date is in the right range if it has been stored
         var dateBefore = Date()
         try await storage.store(Self.testObject, forKey: Self.testCacheKey)
         var dateAfter = Date()
-        modificationDate = await storage.lastModified(forKey: Self.testCacheKey)
+        modificationDate = await storage.updatedAt(forKey: Self.testCacheKey)
         XCTAssertNotNil(modificationDate)
         XCTAssertLessThanOrEqual(dateBefore, modificationDate!)
         XCTAssertLessThanOrEqual(modificationDate!, dateAfter)
@@ -252,7 +263,7 @@ final class ObjectStorageTests: XCTestCase {
         dateBefore = Date()
         try await storage.store(Self.testObject, forKey: Self.testCacheKey)
         dateAfter = Date()
-        modificationDate = await storage.lastModified(forKey: Self.testCacheKey)
+        modificationDate = await storage.updatedAt(forKey: Self.testCacheKey)
         XCTAssertNotNil(modificationDate)
         XCTAssertLessThanOrEqual(dateBefore, modificationDate!)
         XCTAssertLessThanOrEqual(modificationDate!, dateAfter)

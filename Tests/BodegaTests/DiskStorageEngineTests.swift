@@ -1,12 +1,12 @@
 import XCTest
 @testable import Bodega
 
-final class DiskStorageTests: XCTestCase {
+final class DiskStorageEngineTests: XCTestCase {
 
-    private var storage: DiskStorage!
+    private var storage: DiskStorageEngine!
 
     override func setUp() async throws {
-        storage = DiskStorage(directory: .temporary(appendingPath: "Tests"))
+        storage = DiskStorageEngine(directory: .temporary(appendingPath: "Tests"))
         try await storage.removeAllData()
     }
 
@@ -208,14 +208,14 @@ final class DiskStorageTests: XCTestCase {
 
     func testCreationDate() async throws {
         // Make sure the modificationDate is nil if the key hasn't been stored
-        var modificationDate = await storage.lastModified(key: Self.testCacheKey)
+        var modificationDate = await storage.updatedAt(key: Self.testCacheKey)
         XCTAssertNil(modificationDate)
 
         // Make sure the modification date is in the right range if it has been stored
         var dateBefore = Date()
         try await storage.write(Self.testData, key: Self.testCacheKey)
         var dateAfter = Date()
-        modificationDate = await storage.lastModified(key: Self.testCacheKey)
+        modificationDate = await storage.updatedAt(key: Self.testCacheKey)
         XCTAssertNotNil(modificationDate)
         XCTAssertLessThanOrEqual(dateBefore, modificationDate!)
         XCTAssertLessThanOrEqual(modificationDate!, dateAfter)
@@ -226,22 +226,22 @@ final class DiskStorageTests: XCTestCase {
         dateBefore = Date()
         try await storage.write(Self.testData, key: Self.testCacheKey)
         dateAfter = Date()
-        modificationDate = await storage.lastModified(key: Self.testCacheKey)
+        modificationDate = await storage.updatedAt(key: Self.testCacheKey)
         XCTAssertNotNil(modificationDate)
         XCTAssertLessThanOrEqual(dateBefore, modificationDate!)
         XCTAssertLessThanOrEqual(modificationDate!, dateAfter)
     }
 
-    func testLastModifiedDate() async throws {
+    func testUpdatedAtDate() async throws {
         // Make sure the modificationDate is nil if the key hasn't been stored
-        var modificationDate = await storage.lastModified(key: Self.testCacheKey)
+        var modificationDate = await storage.updatedAt(key: Self.testCacheKey)
         XCTAssertNil(modificationDate)
         
         // Make sure the modification date is in the right range if it has been stored
         var dateBefore = Date()
         try await storage.write(Self.testData, key: Self.testCacheKey)
         var dateAfter = Date()
-        modificationDate = await storage.lastModified(key: Self.testCacheKey)
+        modificationDate = await storage.updatedAt(key: Self.testCacheKey)
         XCTAssertNotNil(modificationDate)
         XCTAssertLessThanOrEqual(dateBefore, modificationDate!)
         XCTAssertLessThanOrEqual(modificationDate!, dateAfter)
@@ -252,7 +252,7 @@ final class DiskStorageTests: XCTestCase {
         dateBefore = Date()
         try await storage.write(Self.testData, key: Self.testCacheKey)
         dateAfter = Date()
-        modificationDate = await storage.lastModified(key: Self.testCacheKey)
+        modificationDate = await storage.updatedAt(key: Self.testCacheKey)
         XCTAssertNotNil(modificationDate)
         XCTAssertLessThanOrEqual(dateBefore, modificationDate!)
         XCTAssertLessThanOrEqual(modificationDate!, dateAfter)
@@ -295,7 +295,7 @@ final class DiskStorageTests: XCTestCase {
 
 }
 
-private extension DiskStorageTests {
+private extension DiskStorageEngineTests {
 
     static let testData = Data("Test".utf8)
     static let testCacheKey = CacheKey(verbatim: "test-key")
