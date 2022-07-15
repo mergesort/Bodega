@@ -65,7 +65,7 @@ public actor SQLiteStorageEngine: StorageEngine {
         try self.connection.run(
             Self.storageTable.insert(
                 or: .replace,
-                Self.expressions.keyRow <- key.value,
+                Self.expressions.keyRow <- key.rawValue,
                 Self.expressions.dataRow <- data,
                 Self.expressions.updatedAtRow <- Date()
             )
@@ -78,7 +78,7 @@ public actor SQLiteStorageEngine: StorageEngine {
     ///   multiple `Data` items with their associated keys at once.
     public func write(_ dataAndKeys: [(key: CacheKey, data: Data)]) throws {
         let values = dataAndKeys.map({[
-            Self.expressions.keyRow <- $0.key.value,
+            Self.expressions.keyRow <- $0.key.rawValue,
             Self.expressions.dataRow <- $0.data,
             Self.expressions.updatedAtRow <- Date()
         ]})
@@ -96,7 +96,7 @@ public actor SQLiteStorageEngine: StorageEngine {
         do {
             let query = Self.storageTable
                 .select(Self.expressions.keyRow, Self.expressions.dataRow)
-                .filter(Self.expressions.keyRow == key.value)
+                .filter(Self.expressions.keyRow == key.rawValue)
                 .limit(1)
 
             return try self.connection.pluck(query)?[Self.expressions.dataRow]
@@ -113,7 +113,7 @@ public actor SQLiteStorageEngine: StorageEngine {
     public func read(keys: [CacheKey]) -> [Data] {
         do {
             let query = Self.storageTable.select(Self.expressions.dataRow)
-                .where(keys.map(\.value).contains(Self.expressions.keyRow))
+                .where(keys.map(\.rawValue).contains(Self.expressions.keyRow))
                 .limit(keys.count)
 
             return try self.connection.prepare(query)
@@ -139,7 +139,7 @@ public actor SQLiteStorageEngine: StorageEngine {
     /// and an empty array if there are no `Data` items matching the `keys` passed in.
     public func readDataAndKeys(keys: [CacheKey]) -> [(key: CacheKey, data: Data)] {
         let query = Self.storageTable.select(Self.expressions.keyRow, Self.expressions.dataRow)
-            .where(keys.map(\.value).contains(Self.expressions.keyRow))
+            .where(keys.map(\.rawValue).contains(Self.expressions.keyRow))
             .limit(keys.count)
 
         do {
@@ -175,7 +175,7 @@ public actor SQLiteStorageEngine: StorageEngine {
     /// - Parameters:
     ///   - key: A `CacheKey` for finding the `Data` to remove.
     public func remove(key: CacheKey) throws {
-        let deleteQuery = Self.storageTable.filter(Self.expressions.keyRow == key.value)
+        let deleteQuery = Self.storageTable.filter(Self.expressions.keyRow == key.rawValue)
         try self.connection.run(deleteQuery.delete())
     }
 
@@ -184,7 +184,7 @@ public actor SQLiteStorageEngine: StorageEngine {
     ///   - keys: A `[CacheKey]` for matching multiple `Data` items to remove.
     public func remove(keys: [CacheKey]) throws {
         let deleteQuery = Self.storageTable.select(Self.expressions.keyRow, Self.expressions.dataRow)
-            .where(keys.map(\.value).contains(Self.expressions.keyRow))
+            .where(keys.map(\.rawValue).contains(Self.expressions.keyRow))
             .limit(keys.count)
 
         try self.connection.run(deleteQuery.delete())
@@ -225,7 +225,7 @@ public actor SQLiteStorageEngine: StorageEngine {
         do {
             let query = Self.storageTable
                 .select(Self.expressions.createdAtRow)
-                .filter(Self.expressions.keyRow == key.value)
+                .filter(Self.expressions.keyRow == key.rawValue)
                 .limit(1)
 
             return try self.connection.pluck(query)?[Self.expressions.createdAtRow]
@@ -242,7 +242,7 @@ public actor SQLiteStorageEngine: StorageEngine {
         do {
             let query = Self.storageTable
                 .select(Self.expressions.updatedAtRow)
-                .filter(Self.expressions.keyRow == key.value)
+                .filter(Self.expressions.keyRow == key.rawValue)
                 .limit(1)
 
             return try self.connection.pluck(query)?[Self.expressions.updatedAtRow]
