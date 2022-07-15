@@ -7,6 +7,7 @@ final class DiskStorageEngineTests: XCTestCase {
 
     override func setUp() async throws {
         storage = DiskStorageEngine(directory: .temporary(appendingPath: "Tests"))
+
         try await storage.removeAllData()
     }
 
