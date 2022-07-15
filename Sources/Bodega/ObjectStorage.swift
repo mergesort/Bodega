@@ -17,17 +17,17 @@ public actor ObjectStorage {
     /// objects under the hood.
     ///
     /// If you do not provide a `StorageEngine` parameter then `ObjectStorage` will default to
-    /// creating a ``SQLiteStorageEngine``, with a database located in the app's Documents directory.
+    /// using an ``SQLiteStorageEngine``, with a database located in the app's Documents directory.
     ///
     /// The `SQLiteStorageEngine` is a safe, fast, and easy database to based on SQLite,
     /// but if you prefer to use your own persistence layer or want to save your objects
     /// to another location, you can use the `storage` parameter like so
     /// ```
-    /// SQLiteStorageEngine(directory: .documents(appendingPath: "My Location"))
+    /// SQLiteStorageEngine(directory: .documents(appendingPath: "Assets"))
     /// ```
     /// - Parameter storage: A `StorageEngine` to initialize an `ObjectStorage` instance with.
-    /// If no parameter is provided the default is `SQLiteStorageEngine(directory: .documents(appendingPath: ""))`
-    public init(storage: StorageEngine = SQLiteStorageEngine(directory: .documents(appendingPath: ""))!) {
+    /// If no parameter is provided the default is `SQLiteStorageEngine(directory: .documents(appendingPath: "Data"))`
+    public init(storage: StorageEngine = SQLiteStorageEngine(directory: .documents(appendingPath: "Data"))!) {
         self.storage = storage
     }
 
