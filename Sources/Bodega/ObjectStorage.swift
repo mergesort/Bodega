@@ -1,6 +1,6 @@
 import Foundation
 
-public actor ObjectStorage {
+public actor ObjectStorage<Object: Codable> {
 
     private let storage: StorageEngine
 
@@ -35,7 +35,7 @@ public actor ObjectStorage {
     /// - Parameters:
     ///   - object: The object being stored.
     ///   - key: A `CacheKey` for matching an `Object`.
-    public func store<Object: Codable>(_ object: Object, forKey key: CacheKey) async throws {
+    public func store(_ object: Object, forKey key: CacheKey) async throws {
         let data = try self.encoder.encode(object)
 
         return try await storage.write(data, key: key)
@@ -45,7 +45,7 @@ public actor ObjectStorage {
     /// - Parameters:
     ///   - objectsAndKeys: An array of `[(CacheKey, Object)]` to store
     ///   multiple objects with their associated keys at once.
-    public func store<Object: Codable>(_ objectsAndKeys: [(key: CacheKey, object: Object)]) async throws {
+    public func store(_ objectsAndKeys: [(key: CacheKey, object: Object)]) async throws {
         let dataAndKeys = try objectsAndKeys.map({ try ($0.key, self.encoder.encode($0.object)) })
 
         try await storage.write(dataAndKeys)
@@ -55,7 +55,7 @@ public actor ObjectStorage {
     /// - Parameters:
     ///   - key: A `CacheKey` for matching an `Object`.
     /// - Returns: The object stored if it exists, nil if there is no `Object` stored for the `CacheKey`.
-    public func object<Object: Codable>(forKey key: CacheKey) async -> Object? {
+    public func object(forKey key: CacheKey) async -> Object? {
         guard let data = await storage.read(key: key) else { return nil }
 
         return try? self.decoder.decode(Object.self, from: data)
@@ -66,7 +66,7 @@ public actor ObjectStorage {
     ///   - keys: A `[CacheKey]` for matching multiple `Object`s.
     /// - Returns: An array of `[Object]`s stored if the `CacheKey`s exist,
     /// and an `[]` if there are no `Object`s matching the `keys` passed in.
-    public func objects<Object: Codable>(forKeys keys: [CacheKey]) async -> [Object] {
+    public func objects(forKeys keys: [CacheKey]) async -> [Object] {
         let dataItems = await storage.read(keys: keys)
 
         do {
@@ -87,7 +87,7 @@ public actor ObjectStorage {
     ///   - keys: A `[CacheKey]` for matching multiple `Object`s.
     /// - Returns: An array of `[(CacheKey, Object)]` read if it exists,
     /// and an empty array if there are no `Objects`s matching the `keys` passed in.
-    public func objectsAndKeys<Object: Codable>(keys: [CacheKey]) async -> [(key: CacheKey, object: Object)] {
+    public func objectsAndKeys(keys: [CacheKey]) async -> [(key: CacheKey, object: Object)] {
         return zip(
             keys,
             await self.objects(forKeys: keys)
@@ -96,7 +96,7 @@ public actor ObjectStorage {
 
     /// Reads all `[Object]` objects.
     /// - Returns: An array of `[Object]`s contained in a directory.
-    public func allObjects<Object: Codable>() async -> [Object] {
+    public func allObjects() async -> [Object] {
         let allKeys = await self.allKeys()
         return await self.objects(forKeys: allKeys)
     }
@@ -110,7 +110,7 @@ public actor ObjectStorage {
     /// don't need to know which `CacheKey` led to an `Object` being retrieved
     /// you can use ``allObjects()`` instead.
     /// - Returns: An array of `Object`s and it's associated `CacheKey`s contained in a directory.
-    public func allObjectsAndKeys<Object: Codable>() async -> [(key: CacheKey, object: Object)] {
+    public func allObjectsAndKeys() async -> [(key: CacheKey, object: Object)] {
         let allKeys = await self.allKeys()
         return await self.objectsAndKeys(keys: allKeys)
     }

@@ -72,7 +72,7 @@ final class DiskStorageEngineBackedObjectStorageTests: ObjectStorageTests {
 
 class ObjectStorageTests: XCTestCase {
 
-    fileprivate var storage: ObjectStorage!
+    fileprivate var storage: ObjectStorage<CodableObject>!
 
     // You should run SQLiteStorageEngineBackedObjectStorageTests and DiskStorageEngineBackedObjectStorageTests
     // but not ObjectStorageTests since it's only here for the purpose of shared code.
