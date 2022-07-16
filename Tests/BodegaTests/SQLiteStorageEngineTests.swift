@@ -1,12 +1,12 @@
 import XCTest
 @testable import Bodega
 
-final class DiskStorageEngineTests: XCTestCase {
+final class SQLiteStorageEngineTests: XCTestCase {
 
-    private var storage: DiskStorageEngine!
+    private var storage: SQLiteStorageEngine!
 
     override func setUp() async throws {
-        storage = DiskStorageEngine(directory: .temporary(appendingPath: "Tests"))
+        storage = SQLiteStorageEngine(directory: .temporary(appendingPath: "Tests"))
 
         try await storage.removeAllData()
     }
@@ -45,7 +45,7 @@ final class DiskStorageEngineTests: XCTestCase {
     }
 
     func testReadingArrayOfDataSucceeds() async throws {
-        try await self.writeItemsToDisk(count: 10)
+        try await self.writeItemsToDatabase(count: 10)
         let keyCount = await storage.keyCount()
         XCTAssertEqual(keyCount, 10)
 
@@ -59,7 +59,7 @@ final class DiskStorageEngineTests: XCTestCase {
     }
 
     func testReadingDataAndKeysSucceeds() async throws {
-        try await self.writeItemsToDisk(count: 10)
+        try await self.writeItemsToDatabase(count: 10)
         let allKeys = await storage.allKeys().sorted(by: { $0.value < $1.value })
 
         let lastTwoKeys = Array(allKeys.suffix(2))
@@ -79,7 +79,7 @@ final class DiskStorageEngineTests: XCTestCase {
     }
 
     func testReadingAllDataSucceeds() async throws {
-        try await self.writeItemsToDisk(count: 10)
+        try await self.writeItemsToDatabase(count: 10)
 
         let allData = await storage.readAllData()
         let allStrings = allData
@@ -101,7 +101,7 @@ final class DiskStorageEngineTests: XCTestCase {
     }
 
     func testReadingAllDataAndKeysSucceeds() async throws {
-        try await self.writeItemsToDisk(count: 10)
+        try await self.writeItemsToDatabase(count: 10)
 
         let allKeysAndData = await storage.readAllDataAndKeys()
         XCTAssertEqual(allKeysAndData.count, 10)
@@ -188,12 +188,12 @@ final class DiskStorageEngineTests: XCTestCase {
 
         XCTAssertEqual(keyCount, 0)
 
-        try await self.writeItemsToDisk(count: 10)
+        try await self.writeItemsToDatabase(count: 10)
         let updatedKeyCount = await storage.keyCount()
         XCTAssertEqual(updatedKeyCount, 10)
 
         // Overwriting data in the same cache keys and ensuring that the count doesn't change
-        try await self.writeItemsToDisk(count: 10)
+        try await self.writeItemsToDatabase(count: 10)
         let overwrittenKeyCount = await storage.keyCount()
         XCTAssertEqual(overwrittenKeyCount, 10)
     }
@@ -212,7 +212,7 @@ final class DiskStorageEngineTests: XCTestCase {
     }
 
     func testAllKeys() async throws {
-        try await self.writeItemsToDisk(count: 10)
+        try await self.writeItemsToDatabase(count: 10)
         let allKeys = await storage.allKeys().sorted(by: { $0.value < $1.value })
 
         XCTAssertEqual(allKeys[0].value, "0")
@@ -220,8 +220,6 @@ final class DiskStorageEngineTests: XCTestCase {
         XCTAssertEqual(allKeys.count, 10)
     }
 
-    // Unlike most StorageEngines when a DiskStorage rewrites data the createdAt changes.
-    // Since we are overwriting a file, a new file is created, with a new createdAt.
     func testCreatedAtDate() async throws {
         // Make sure the createdAt is nil if the key hasn't been stored
         let initialCreatedAt = await storage.createdAt(key: Self.testCacheKey)
@@ -237,9 +235,7 @@ final class DiskStorageEngineTests: XCTestCase {
         try await storage.write(Self.testData, key: Self.testCacheKey)
         let secondWriteDate = await storage.createdAt(key: Self.testCacheKey)
 
-        // DiskStorageEngine will overwrite the original data so unlike other engines
-        // a new `createdAt` will be generated on write.
-        XCTAssertNotEqual(firstWriteDate, secondWriteDate)
+        XCTAssertEqual(firstWriteDate, secondWriteDate)
     }
 
     func testUpdatedAtDate() async throws {
@@ -259,45 +255,10 @@ final class DiskStorageEngineTests: XCTestCase {
 
         XCTAssertNotEqual(firstWriteDate, secondWriteDate)
     }
-    
-    func testLastAccessDate() async throws {
-        // Make sure lastAccessed is nil if the key hasn't been stored
-        var accessDate = await storage.lastAccessed(key: Self.testCacheKey)
-        XCTAssertNil(accessDate)
-        
-        // Make sure lastAccessed is in the right range if it has been stored
-        var dateBefore = Date()
-        try await storage.write(Self.testData, key: Self.testCacheKey)
-        var dateAfter = Date()
-        accessDate = await storage.lastAccessed(key: Self.testCacheKey)
-        XCTAssertNotNil(accessDate)
-        XCTAssertLessThanOrEqual(dateBefore, accessDate!)
-        XCTAssertLessThanOrEqual(accessDate!, dateAfter)
-        
-        try await Task.sleep(nanoseconds: 1_000_000)
-        
-        // Make sure lastAccessed is updated when the data is read
-        dateBefore = Date()
-        let data = await storage.read(key: Self.testCacheKey)
-        dateAfter = Date()
-        XCTAssertEqual(data, Self.testData)
-        accessDate = await storage.lastAccessed(key: Self.testCacheKey)
-        XCTAssertNotNil(accessDate)
-        XCTAssertLessThanOrEqual(dateBefore, accessDate!)
-        // Note that there is a slight delay between reading the data and the access time,
-        // so we need to allow for that.
-        XCTAssertLessThanOrEqual(accessDate!, dateAfter.addingTimeInterval(0.001))
-        
-        try await Task.sleep(nanoseconds: 1_000_000)
-        
-        // Make sure fetching the access date doesn't change the access date
-        let accessDate2 = await storage.lastAccessed(key: Self.testCacheKey)
-        XCTAssertEqual(accessDate, accessDate2)
-    }
 
 }
 
-private extension DiskStorageEngineTests {
+private extension SQLiteStorageEngineTests {
 
     static let testData = Data("Test".utf8)
     static let testCacheKey = CacheKey(verbatim: "test-key")
@@ -309,7 +270,7 @@ private extension DiskStorageEngineTests {
         (CacheKey(verbatim: "4"), Data("Value 4".utf8))
     ]
 
-    func writeItemsToDisk(count: Int) async throws {
+    func writeItemsToDatabase(count: Int) async throws {
         for i in 0..<count {
             // This encoding could fail in some use cases but we're going to use very simple strings for testing
             try await storage.write("Value \(i)".data(using: .utf8)!, key: CacheKey(verbatim: "\(i)"))

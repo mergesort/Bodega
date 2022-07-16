@@ -134,6 +134,13 @@ public actor DiskStorageEngine: StorageEngine {
         return self.allKeys().count
     }
 
+    /// Checks whether a value with a key is persisted.
+    /// - Parameter key: The key to for existence.
+    /// - Returns: If the key exists the function returns true, false if it does not.
+    public func keyExists(_ key: CacheKey) -> Bool {
+        self.allKeys().contains(key)
+    }
+
     /// Iterates through a `directory` to find all of the keys.
     /// - Returns: An array of the keys contained in a directory.
     public func allKeys() -> [CacheKey] {

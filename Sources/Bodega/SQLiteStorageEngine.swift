@@ -47,7 +47,7 @@ public actor SQLiteStorageEngine: StorageEngine {
             self.connection = try Connection(directory.url.appendingPathExtension("sqlite3").absoluteString)
 
             try self.connection.run(Self.storageTable.create(ifNotExists: true) { table in
-                table.column(Self.expressions.keyRow, primaryKey: true)
+                table.column(Self.expressions.keyRow)
                 table.column(Self.expressions.dataRow)
                 table.column(Self.expressions.createdAtRow, defaultValue: Date())
                 table.column(Self.expressions.updatedAtRow, defaultValue: Date())
@@ -62,14 +62,21 @@ public actor SQLiteStorageEngine: StorageEngine {
     ///   - data: The `Data` being stored to disk.
     ///   - key: A `CacheKey` for matching `Data`.
     public func write(_ data: Data, key: CacheKey) throws {
-        try self.connection.run(
-            Self.storageTable.insert(
-                or: .replace,
-                Self.expressions.keyRow <- key.rawValue,
-                Self.expressions.dataRow <- data,
-                Self.expressions.updatedAtRow <- Date()
+        let values = [
+            Self.expressions.keyRow <- key.rawValue,
+            Self.expressions.dataRow <- data,
+            Self.expressions.updatedAtRow <- Date()
+        ]
+
+        if self.keyExists(key) {
+            try self.connection.run(
+                Self.storageTable.update(values)
             )
-        )
+        } else {
+            try self.connection.run(
+                Self.storageTable.insert(values)
+            )
+        }
     }
 
     /// Writes an array of `Data` items to the database with their associated `CacheKey` from the tuple.
@@ -199,9 +206,29 @@ public actor SQLiteStorageEngine: StorageEngine {
     /// - Returns: The file/key count.
     public func keyCount() -> Int {
         do {
-            return try self.connection.scalar(Self.storageTable.select(Self.expressions.keyRow.distinct.count))
+            return try self.connection.scalar(
+                Self.storageTable.select(
+                    Self.expressions.keyRow.distinct.count
+                )
+            )
         } catch {
             return 0
+        }
+    }
+
+    /// Checks whether a value with a key is persisted.
+    /// - Parameter key: The key to for existence.
+    /// - Returns: If the key exists the function returns true, false if it does not.
+    public func keyExists(_ key: CacheKey) -> Bool {
+        do {
+            let query = Self.storageTable
+                .select(Self.expressions.keyRow)
+                .filter(Self.expressions.keyRow == key.rawValue)
+                .limit(1)
+
+            return try self.connection.pluck(query)?[Self.expressions.keyRow] != nil
+        } catch {
+            return false
         }
     }
 

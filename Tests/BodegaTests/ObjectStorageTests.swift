@@ -1,22 +1,90 @@
 import XCTest
 @testable import Bodega
 
-final class ObjectStorageTests: XCTestCase {
-
-    private var storage: ObjectStorage!
-
-    private var diskBackedObjectStorage: ObjectStorage!
-    private var sqliteBackedObjectStorage: ObjectStorage!
+// Testing an ObjectStorage instance that's backed by a SQLiteStorageEngine
+final class SQLiteStorageEngineBackedObjectStorageTests: ObjectStorageTests {
 
     override func setUp() async throws {
-        let diskStorage = DiskStorageEngine(directory: .temporary(appendingPath: "FileSystemTests"))
-        let sqliteStorage = SQLiteStorageEngine(directory: .temporary(appendingPath: "SQLiteTests"))!
+        storage = ObjectStorage(
+            storage: SQLiteStorageEngine(directory: .temporary(appendingPath: "SQLiteTests"))!
+        )
 
-        // Remove this soon
-        storage = ObjectStorage(storage: diskStorage)
+        try await storage.removeAllObjects()
+    }
 
-        diskBackedObjectStorage = ObjectStorage(storage: diskStorage)
-        sqliteBackedObjectStorage = ObjectStorage(storage: sqliteStorage)
+    // Like most StorageEngines when a SQLiteStorageEngine rewrites data the createdAt does not change.
+    // This is in contrast to DiskStorage where we are overwriting a file
+    // and a new file with a new createdAt is created.
+    func testCreatedAtDate() async throws {
+        // Make sure the createdAt is nil if the key hasn't been stored
+        let initialCreatedAt = await storage.createdAt(forKey: Self.testCacheKey)
+        XCTAssertNil(initialCreatedAt)
+
+        // Make sure the createdAt is in the right range if it has been stored
+        try await storage.store(Self.testObject, forKey: Self.testCacheKey)
+        let firstWriteDate = await storage.createdAt(forKey: Self.testCacheKey)
+
+        try await Task.sleep(nanoseconds: 1_000_000)
+
+        // Make sure the createdAt date is not updated when the data is re-written
+        try await storage.store(Self.testObject, forKey: Self.testCacheKey)
+        let secondWriteDate = await storage.createdAt(forKey: Self.testCacheKey)
+
+        XCTAssertEqual(firstWriteDate, secondWriteDate)
+    }
+
+}
+
+// Testing an ObjectStorage instance that's backed by a DiskStorageEngine
+final class DiskStorageEngineBackedObjectStorageTests: ObjectStorageTests {
+
+    override func setUp() async throws {
+        storage = ObjectStorage(
+            storage: DiskStorageEngine(directory: .temporary(appendingPath: "DiskStorageTests"))
+        )
+
+        try await storage.removeAllObjects()
+    }
+
+    // Unlike most StorageEngines when a DiskStorage rewrites data the createdAt changes.
+    // Since we are overwriting a file, a new file with a new createdAt is created.
+    func testCreatedAtDate() async throws {
+        // Make sure the createdAt is nil if the key hasn't been stored
+        let initialCreatedAt = await storage.createdAt(forKey: Self.testCacheKey)
+        XCTAssertNil(initialCreatedAt)
+
+        // Make sure the createdAt is in the right range if it has been stored
+        try await storage.store(Self.testObject, forKey: Self.testCacheKey)
+        let firstWriteDate = await storage.createdAt(forKey: Self.testCacheKey)
+
+        try await Task.sleep(nanoseconds: 1_000_000)
+
+        // Make sure the createdAt date is not updated when the data is re-written
+        try await storage.store(Self.testObject, forKey: Self.testCacheKey)
+        let secondWriteDate = await storage.createdAt(forKey: Self.testCacheKey)
+
+        // DiskStorageEngine will overwrite the original data so unlike other engines
+        // a new `createdAt` will be generated on write.
+        XCTAssertNotEqual(firstWriteDate, secondWriteDate)
+    }
+
+}
+
+class ObjectStorageTests: XCTestCase {
+
+    fileprivate var storage: ObjectStorage!
+
+    // You should run SQLiteStorageEngineBackedObjectStorageTests and DiskStorageEngineBackedObjectStorageTests
+    // but not ObjectStorageTests since it's only here for the purpose of shared code.
+    // Since this can run on it's own, instead what we do is pick one of the two storages at random
+    // and let the tests run, since they should pass anyhow as long as the storages work.
+    override func setUp() async throws {
+        let diskStorageEngine = DiskStorageEngine(directory: .temporary(appendingPath: "FileSystemTests"))
+        let sqliteStorageEngine = SQLiteStorageEngine(directory: .temporary(appendingPath: "SQLiteTests"))!
+
+        storage = ObjectStorage(
+            storage: [diskStorageEngine, sqliteStorageEngine].randomElement()!
+        )
 
         try await storage.removeAllObjects()
     }
@@ -217,56 +285,22 @@ final class ObjectStorageTests: XCTestCase {
         XCTAssertEqual(allKeys.count, 10)
     }
 
-    func testCreationDate() async throws {
-        // Make sure the creationDate is nil if the key hasn't been stored
-        var creationDate = await storage.creationDate(forKey: Self.testCacheKey)
-        XCTAssertNil(creationDate)
-
-        // Make sure the modification date is in the right range if it has been stored
-        var dateBefore = Date()
-        try await storage.store(Self.testObject, forKey: Self.testCacheKey)
-        var dateAfter = Date()
-        creationDate = await storage.creationDate(forKey: Self.testCacheKey)
-        XCTAssertNotNil(creationDate)
-        XCTAssertLessThanOrEqual(dateBefore, creationDate!)
-        XCTAssertLessThanOrEqual(creationDate!, dateAfter)
-
-        try await Task.sleep(nanoseconds: 1_000_000)
-
-        // Make sure the creationDate date is updated when the data is re-written
-        dateBefore = Date()
-        try await storage.store(Self.testObject, forKey: Self.testCacheKey)
-        dateAfter = Date()
-        creationDate = await storage.creationDate(forKey: Self.testCacheKey)
-        XCTAssertNotNil(creationDate)
-        XCTAssertLessThanOrEqual(dateBefore, creationDate!)
-        XCTAssertLessThanOrEqual(creationDate!, dateAfter)
-    }
-
     func testUpdatedAtDate() async throws {
-        // Make sure the modificationDate is nil if the key hasn't been stored
-        var modificationDate = await storage.updatedAt(forKey: Self.testCacheKey)
-        XCTAssertNil(modificationDate)
-        
-        // Make sure the modification date is in the right range if it has been stored
-        var dateBefore = Date()
+        // Make sure the updatedAt is nil if the key hasn't been stored
+        let initialUpdatedAt = await storage.updatedAt(forKey: Self.testCacheKey)
+        XCTAssertNil(initialUpdatedAt)
+
+        // Make sure the updatedAt is in the right range if it has been stored
         try await storage.store(Self.testObject, forKey: Self.testCacheKey)
-        var dateAfter = Date()
-        modificationDate = await storage.updatedAt(forKey: Self.testCacheKey)
-        XCTAssertNotNil(modificationDate)
-        XCTAssertLessThanOrEqual(dateBefore, modificationDate!)
-        XCTAssertLessThanOrEqual(modificationDate!, dateAfter)
-        
+        let firstWriteDate = await storage.updatedAt(forKey: Self.testCacheKey)
+
         try await Task.sleep(nanoseconds: 1_000_000)
-        
-        // Make sure the modification date is updated when the data is re-written
-        dateBefore = Date()
+
+        // Make sure the updatedAt date is updated when the data is re-written
         try await storage.store(Self.testObject, forKey: Self.testCacheKey)
-        dateAfter = Date()
-        modificationDate = await storage.updatedAt(forKey: Self.testCacheKey)
-        XCTAssertNotNil(modificationDate)
-        XCTAssertLessThanOrEqual(dateBefore, modificationDate!)
-        XCTAssertLessThanOrEqual(modificationDate!, dateAfter)
+        let secondWriteDate = await storage.updatedAt(forKey: Self.testCacheKey)
+
+        XCTAssertNotEqual(firstWriteDate, secondWriteDate)
     }
 
 }

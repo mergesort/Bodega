@@ -31,6 +31,7 @@ public protocol StorageEngine: Actor {
     func removeAllData() throws
 
     func keyCount() -> Int
+    func keyExists(_ key: CacheKey) -> Bool
     func allKeys() -> [CacheKey]
 
     func createdAt(key: CacheKey) -> Date?

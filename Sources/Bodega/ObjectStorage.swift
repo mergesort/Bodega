@@ -152,14 +152,13 @@ public actor ObjectStorage {
     /// - Parameters:
     ///   - key: A `CacheKey` for matching an `Object`.
     /// - Returns: The creation date of the `Object` if it exists, nil if there is no `Object` stored for the `CacheKey`.
-    public func creationDate(forKey key: CacheKey, subdirectory: String? = nil) async -> Date? {
+    public func createdAt(forKey key: CacheKey) async -> Date? {
         return await storage.createdAt(key: key)
     }
 
     /// Returns the modification date for the object represented by the `CacheKey`, if it exists.
     /// - Parameters:
     ///   - key: A `CacheKey` for matching an `Object`.
-    ///   - subdirectory: An optional subdirectory the caller can read from.
     /// - Returns: The modification date of the object if it exists, nil if there is no object stored for the `CacheKey`.
     public func updatedAt(forKey key: CacheKey) async -> Date? {
         return await storage.updatedAt(key: key)
