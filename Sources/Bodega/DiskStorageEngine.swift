@@ -163,6 +163,15 @@ public actor DiskStorageEngine: StorageEngine {
             .resourceValues(forKeys: [.creationDateKey]).creationDate
     }
 
+    /// Returns the updatedAt date for the file represented by the `CacheKey`, if it exists.
+    /// - Parameters:
+    ///   - key: A `CacheKey` for matching `Data` to a location on disk.
+    /// - Returns: The updatedAt date of the `Data` on disk if it exists, nil if there is no `Data` stored for the `CacheKey`.
+    public func updatedAt(key: CacheKey) -> Date? {
+        return try? self.concatenatedPath(key: key.value)
+            .resourceValues(forKeys: [.contentModificationDateKey]).contentModificationDate
+    }
+
     /// Returns the last access date of the file for the `CacheKey`, if it exists.
     /// - Parameters:
     ///   - key: A `CacheKey` for matching `Data` to a location on disk.
@@ -170,15 +179,6 @@ public actor DiskStorageEngine: StorageEngine {
     public func lastAccessed(key: CacheKey) -> Date? {
         return try? self.concatenatedPath(key: key.value)
             .resourceValues(forKeys: [.contentAccessDateKey]).contentAccessDate
-    }
-
-    /// Returns the modification date for the file represented by the `CacheKey`, if it exists.
-    /// - Parameters:
-    ///   - key: A `CacheKey` for matching `Data` to a location on disk.
-    /// - Returns: The modification date of the `Data` on disk if it exists, nil if there is no `Data` stored for the `CacheKey`.
-    public func updatedAt(key: CacheKey) -> Date? {
-        return try? self.concatenatedPath(key: key.value)
-            .resourceValues(forKeys: [.contentModificationDateKey]).contentModificationDate
     }
 
 }

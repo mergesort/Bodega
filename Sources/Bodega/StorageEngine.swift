@@ -1,19 +1,19 @@
 import Foundation
 
-/// A StorageEngine represents an underlying data store mechanism for saving and persisting data.
+/// A `StorageEngine` represents an underlying data store mechanism for saving and persisting data.
 ///
-/// A `StorageEngine` is a construct you can build that plugs into ``ObjectStorage``
+/// A ``StorageEngine`` is a construct you can build that plugs into ``ObjectStorage``
 /// to use for persisting data.
 ///
 /// This library has two implementations of `StorageEngine`, ``DiskStorageEngine`` and ``SQLiteStorageEngine``.
 /// Both of these can serve as inspiration if you have your own persistence mechanism (such as Realm, CoreData, etc).
 ///
-/// ``DiskStorageEngine`` takes `Data` and saves it to disk using file system operations.
-/// ``SQLiteStorageEngine`` takes `Data` and saves it to an SQLite database under the hood.
+/// `DiskStorageEngine` takes `Data` and saves it to disk using file system operations.
+/// `SQLiteStorageEngine` takes `Data` and saves it to an SQLite database under the hood.
 ///
-/// If you have your own way of storing data then you can refer to ``DiskStorageEngine`` and ``SQLiteStorageEngine``
+/// If you have your own way of storing data then you can refer to `DiskStorageEngine` and `SQLiteStorageEngine`
 /// for inspiration, but all you need to do is conform to the `StorageEngine` protocol
-/// and initialize ``ObjectStorage`` with that storage.
+/// and initialize `ObjectStorage` with that storage.
 public protocol StorageEngine: Actor {
     var directory: FileManager.Directory { get }
 
