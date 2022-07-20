@@ -47,7 +47,7 @@ public actor SQLiteStorageEngine: StorageEngine {
             self.connection = try Connection(directory.url.appendingPathExtension("sqlite3").absoluteString)
 
             try self.connection.run(Self.storageTable.create(ifNotExists: true) { table in
-                table.column(Self.expressions.keyRow)
+                table.column(Self.expressions.keyRow, primaryKey: true)
                 table.column(Self.expressions.dataRow)
                 table.column(Self.expressions.createdAtRow, defaultValue: Date())
                 table.column(Self.expressions.updatedAtRow, defaultValue: Date())
