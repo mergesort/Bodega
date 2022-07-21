@@ -6,6 +6,9 @@ public extension FileManager {
         public let url: URL
     }
 
+    public init(url: URL) {
+        self.url = url
+    }
 }
 
 public extension FileManager.Directory {
