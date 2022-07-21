@@ -4,11 +4,12 @@ public extension FileManager {
 
     struct Directory {
         public let url: URL
+
+        public init(url: URL) {
+            self.url = url
+        }
     }
 
-    public init(url: URL) {
-        self.url = url
-    }
 }
 
 public extension FileManager.Directory {
