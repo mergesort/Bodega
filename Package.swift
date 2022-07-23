@@ -1,4 +1,4 @@
-// swift-tools-version:5.5
+// swift-tools-version:5.6
 // The swift-tools-version declares the minimum version of Swift required to build this package.
 
 import PackageDescription
@@ -16,11 +16,15 @@ let package = Package(
         ),
     ],
     dependencies: [
+        .package(url: "https://github.com/stephencelis/SQLite.swift.git", exact: Version(0, 13, 3)),
+        .package(url: "https://github.com/apple/swift-docc-plugin", from: "1.0.0"),
     ],
     targets: [
         .target(
             name: "Bodega",
-            dependencies: []),
+            dependencies: [
+                .productItem(name: "SQLite", package: "SQLite.swift", condition: nil)
+            ]),
         .testTarget(
             name: "BodegaTests",
             dependencies: ["Bodega"]),
