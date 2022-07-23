@@ -46,15 +46,6 @@ public actor DiskStorageEngine: StorageEngine {
         return try? Data(contentsOf: self.concatenatedPath(key: key.value))
     }
 
-    /// Reads `Data` items from disk based on the associated array of `CacheKey`s provided as a parameter.
-    /// - Parameters:
-    ///   - keys: A `[CacheKey]` for matching multiple `Data` items to their a location on disk.
-    /// - Returns: An array of `[Data]` stored on disk if the `CacheKey`s exist,
-    /// and an `[]` if there is no `Data` matching the `keys` passed in.
-    public func read(keys: [CacheKey]) -> [Data] {
-        return keys.compactMap({ self.read(key: $0) })
-    }
-
     /// Reads `Data` from disk based on the associated array of `CacheKey`s provided as a parameter
     /// and returns an array `[(CacheKey, Data)]` associated with the passed in `CacheKey`s.
     ///
@@ -74,8 +65,6 @@ public actor DiskStorageEngine: StorageEngine {
         ).map { ($0, $1) }
     }
 
-    /// Reads all the `[Data]` located in the `directory`.
-    /// - Returns: An array of the `[Data]` contained in a directory.
     public func readAllData() -> [Data] {
         let allKeys = self.allKeys()
         return self.read(keys: allKeys)
@@ -108,30 +97,15 @@ public actor DiskStorageEngine: StorageEngine {
         }
     }
 
-    /// Removes `Data` items from disk based on the associated array of `[CacheKey]`s provided as a parameter.
-    /// - Parameters:
-    ///   - keys: A `[CacheKey]` for matching multiple `Data` items to their a location on disk.
-    public func remove(keys: [CacheKey]) throws {
-        for key in keys {
-            try self.remove(key: key)
-        }
-    }
-
     /// Removes all the `Data` items located in the `directory`.
     public func removeAllData() throws {
         do {
-            try FileManager.default.removeItem(at: self.folder)
+            try FileManager.default.removeItem(at: self.directory.url)
         } catch CocoaError.fileNoSuchFile {
             // No-op, we treat deleting a non-existent file/folder as a successful removal rather than throwing
         } catch {
             throw error
         }
-    }
-
-    /// Iterates through a directory to find the total number of `Data` items.
-    /// - Returns: The file/key count.
-    public func keyCount() -> Int {
-        return self.allKeys().count
     }
 
     /// Checks whether a value with a key is persisted.
@@ -141,11 +115,17 @@ public actor DiskStorageEngine: StorageEngine {
         self.allKeys().contains(key)
     }
 
+    /// Iterates through a directory to find the total number of `Data` items.
+    /// - Returns: The file/key count.
+    public func keyCount() -> Int {
+        return self.allKeys().count
+    }
+
     /// Iterates through a `directory` to find all of the keys.
     /// - Returns: An array of the keys contained in a directory.
     public func allKeys() -> [CacheKey] {
         do {
-            let directoryContents = try FileManager.default.contentsOfDirectory(at: self.folder, includingPropertiesForKeys: nil)
+            let directoryContents = try FileManager.default.contentsOfDirectory(at: self.directory.url, includingPropertiesForKeys: nil)
             let fileOnlyKeys = directoryContents.lazy.filter({ !$0.hasDirectoryPath }).map(\.lastPathComponent)
 
             return fileOnlyKeys.map(CacheKey.init(verbatim:))
@@ -201,7 +181,7 @@ private extension DiskStorageEngine {
     }
 
     func concatenatedPath(key: String) -> URL {
-        return self.folder.appendingPathComponent(key)
+        return self.directory.url.appendingPathComponent(key)
     }
 
 }

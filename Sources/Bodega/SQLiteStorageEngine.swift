@@ -208,20 +208,6 @@ public actor SQLiteStorageEngine: StorageEngine {
         try self.connection.run(Self.storageTable.delete())
     }
 
-    /// Iterates through the database to find the total number of `Data` items.
-    /// - Returns: The file/key count.
-    public func keyCount() -> Int {
-        do {
-            return try self.connection.scalar(
-                Self.storageTable.select(
-                    Self.expressions.keyRow.distinct.count
-                )
-            )
-        } catch {
-            return 0
-        }
-    }
-
     /// Checks whether a value with a key is persisted.
     /// - Parameter key: The key to for existence.
     /// - Returns: If the key exists the function returns true, false if it does not.
@@ -235,6 +221,20 @@ public actor SQLiteStorageEngine: StorageEngine {
             return try self.connection.pluck(query)?[Self.expressions.keyRow] != nil
         } catch {
             return false
+        }
+    }
+
+    /// Iterates through the database to find the total number of `Data` items.
+    /// - Returns: The file/key count.
+    public func keyCount() -> Int {
+        do {
+            return try self.connection.scalar(
+                Self.storageTable.select(
+                    Self.expressions.keyRow.distinct.count
+                )
+            )
+        } catch {
+            return 0
         }
     }
 
