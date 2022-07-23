@@ -5,7 +5,7 @@ public actor DiskStorageEngine: StorageEngine {
     /// A directory on the filesystem where your `StorageEngine`s data will be stored.
     public var directory: FileManager.Directory
 
-    /// Initializes a new `DiskStorageEngine` object for persisting `Data` to disk.
+    /// Initializes a new `DiskStorageEngine` for persisting `Data` to disk.
     /// - Parameter directory: A directory on the filesystem where your files will be written to.
     /// `FileManager.Directory` is a type-safe wrapper around URL that provides sensible defaults like
     ///  `.documents(appendingPath:)`, `.caches(appendingPath:)`, and more.

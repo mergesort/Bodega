@@ -8,14 +8,14 @@ public actor SQLiteStorageEngine: StorageEngine {
     /// A directory on the filesystem where your `StorageEngine`s data will be stored.
     public var directory: FileManager.Directory
 
-    /// Initializes a new `SQLiteStorageEngine` object for persisting `Data` to disk.
+    /// Initializes a new `SQLiteStorageEngine` for persisting `Data` to disk.
     ///
     /// `SQLiteStorageEngine` is significantly faster than `DiskStorageEngine` because it uses SQLite
     /// rather than saving files to disk. As much `DiskStorageEngine` was optimized, file system operations
     /// like reading and writing have a relatively high cost per operation and SQLite
     /// [has been shown](https://www.sqlite.org/fasterthanfs.html) to be significantly faster than files for storing data.
     ///
-    /// If you're not using your own `StorageEngine` (such as Realm, Core Data, etc)
+    /// If you're not using your own persistence mechanism such as Realm, Core Data, etc,
     /// it is highly recommended you use `SQLiteStorageEngine` to power your `ObjectStorage`.
     ///
     /// When initializing a database there is a possibility that the database Connection will fail.
@@ -40,11 +40,15 @@ public actor SQLiteStorageEngine: StorageEngine {
     /// - Parameter directory: A directory on the filesystem where your files will be written to.
     /// `FileManager.Directory` is a type-safe wrapper around URL that provides sensible defaults like
     ///  `.documents(appendingPath:)`, `.caches(appendingPath:)`, and more.
-    public init?(directory: FileManager.Directory) {
+    public init?(directory: FileManager.Directory, databaseFilename filename: String = "data") {
         self.directory = directory
 
         do {
-            self.connection = try Connection(directory.url.appendingPathExtension("sqlite3").absoluteString)
+            if !Self.directoryExists(atURL: directory.url) {
+                try Self.createDirectory(url: directory.url)
+            }
+
+            self.connection = try Connection(directory.url.appendingPathComponent(filename).appendingPathExtension("sqlite3").absoluteString)
 
             try self.connection.run(Self.storageTable.create(ifNotExists: true) { table in
                 table.column(Self.expressions.keyRow, primaryKey: true)
@@ -70,7 +74,9 @@ public actor SQLiteStorageEngine: StorageEngine {
 
         if self.keyExists(key) {
             try self.connection.run(
-                Self.storageTable.update(values)
+                Self.storageTable
+                    .filter(Self.expressions.keyRow == key.rawValue)
+                    .update(values)
             )
         } else {
             try self.connection.run(
@@ -314,3 +320,21 @@ extension SQLiteStorageEngine.Expressions {
 
 }
 
+private extension SQLiteStorageEngine {
+
+    static func directoryExists(atURL url: URL) -> Bool {
+        var isDirectory: ObjCBool = true
+
+        return FileManager.default.fileExists(atPath: url.path, isDirectory: &isDirectory)
+    }
+
+    static func createDirectory(url: URL) throws {
+        try FileManager.default
+            .createDirectory(
+                at: url,
+                withIntermediateDirectories: true,
+                attributes: nil
+            )
+    }
+
+}

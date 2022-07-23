@@ -185,7 +185,6 @@ final class SQLiteStorageEngineTests: XCTestCase {
 
     func testKeyCount() async throws {
         let keyCount = await storage.keyCount()
-
         XCTAssertEqual(keyCount, 0)
 
         try await self.writeItemsToDatabase(count: 10)
