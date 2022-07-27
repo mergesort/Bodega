@@ -1,14 +1,16 @@
 import Foundation
 
-public actor DiskStorage {
+public actor DiskStorageEngine: StorageEngine {
 
-    private let folder: URL
+    /// A directory on the filesystem where your `StorageEngine`s data will be stored.
+    public var directory: FileManager.Directory
 
-    /// Initializes a new `DiskStorage` object for persisting `Data` to disk.
-    /// - Parameter storagePath: A URL representing the folder on disk that your files will be written to.
-    /// Constructed as a URL for those that wish to use features like shared containers, rather than as traditionally in the Documents or Caches directory.
+    /// Initializes a new `DiskStorageEngine` for persisting `Data` to disk.
+    /// - Parameter directory: A directory on the filesystem where your files will be written to.
+    /// `FileManager.Directory` is a type-safe wrapper around URL that provides sensible defaults like
+    ///  `.documents(appendingPath:)`, `.caches(appendingPath:)`, and more.
     public init(directory: FileManager.Directory) {
-        self.folder = directory.url
+        self.directory = directory
     }
 
     /// Writes `Data` to disk based on the associated `CacheKey`.
@@ -44,15 +46,6 @@ public actor DiskStorage {
         return try? Data(contentsOf: self.concatenatedPath(key: key.value))
     }
 
-    /// Reads `Data` items from disk based on the associated array of `CacheKey`s provided as a parameter.
-    /// - Parameters:
-    ///   - keys: A `[CacheKey]` for matching multiple `Codable` objects to their a location on disk.
-    /// - Returns: An array of `[Data]` stored on disk if the `CacheKey`s exist,
-    /// and an `[]` if there is no `Data` matching the `keys` passed in.
-    public func read(keys: [CacheKey]) -> [Data] {
-        return keys.compactMap({ self.read(key: $0) })
-    }
-
     /// Reads `Data` from disk based on the associated array of `CacheKey`s provided as a parameter
     /// and returns an array `[(CacheKey, Data)]` associated with the passed in `CacheKey`s.
     ///
@@ -72,14 +65,12 @@ public actor DiskStorage {
         ).map { ($0, $1) }
     }
 
-    /// Reads all the `[Data]` located at the `storagePath`.
-    /// - Returns: An array of the `[Data]` contained in a directory.
     public func readAllData() -> [Data] {
         let allKeys = self.allKeys()
         return self.read(keys: allKeys)
     }
 
-    /// Reads all the `Data` located at the `storagePath` and returns an array
+    /// Reads all the `Data` located in the `directory` and returns an array
     /// of `[(CacheKey, Data)]` tuples associated with the `CacheKey`.
     ///
     /// This method returns the `CacheKey` and `Data` together in an array of `[(CacheKey, Data)]`
@@ -106,19 +97,10 @@ public actor DiskStorage {
         }
     }
 
-    /// Removes `Data` items from disk based on the associated array of `[CacheKey]`s provided as a parameter.
-    /// - Parameters:
-    ///   - keys: A `[CacheKey]` for matching multiple `Data` items to their a location on disk.
-    public func remove(keys: [CacheKey]) throws {
-        for key in keys {
-            try self.remove(key: key)
-        }
-    }
-
-    /// Removes all the `Data` items located at the `storagePath`.
+    /// Removes all the `Data` items located in the `directory`.
     public func removeAllData() throws {
         do {
-            try FileManager.default.removeItem(at: self.folder)
+            try FileManager.default.removeItem(at: self.directory.url)
         } catch CocoaError.fileNoSuchFile {
             // No-op, we treat deleting a non-existent file/folder as a successful removal rather than throwing
         } catch {
@@ -126,17 +108,24 @@ public actor DiskStorage {
         }
     }
 
-    /// Iterates through a directory to find the total number of files.
+    /// Checks whether a value with a key is persisted.
+    /// - Parameter key: The key to for existence.
+    /// - Returns: If the key exists the function returns true, false if it does not.
+    public func keyExists(_ key: CacheKey) -> Bool {
+        self.allKeys().contains(key)
+    }
+
+    /// Iterates through a directory to find the total number of `Data` items.
     /// - Returns: The file/key count.
     public func keyCount() -> Int {
         return self.allKeys().count
     }
 
-    /// Iterates through `storagePath` to find all of the files and their respective keys.
+    /// Iterates through a `directory` to find all of the keys.
     /// - Returns: An array of the keys contained in a directory.
     public func allKeys() -> [CacheKey] {
         do {
-            let directoryContents = try FileManager.default.contentsOfDirectory(at: self.folder, includingPropertiesForKeys: nil)
+            let directoryContents = try FileManager.default.contentsOfDirectory(at: self.directory.url, includingPropertiesForKeys: nil)
             let fileOnlyKeys = directoryContents.lazy.filter({ !$0.hasDirectoryPath }).map(\.lastPathComponent)
 
             return fileOnlyKeys.map(CacheKey.init(verbatim:))
@@ -154,6 +143,15 @@ public actor DiskStorage {
             .resourceValues(forKeys: [.creationDateKey]).creationDate
     }
 
+    /// Returns the updatedAt date for the file represented by the `CacheKey`, if it exists.
+    /// - Parameters:
+    ///   - key: A `CacheKey` for matching `Data` to a location on disk.
+    /// - Returns: The updatedAt date of the `Data` on disk if it exists, nil if there is no `Data` stored for the `CacheKey`.
+    public func updatedAt(key: CacheKey) -> Date? {
+        return try? self.concatenatedPath(key: key.value)
+            .resourceValues(forKeys: [.contentModificationDateKey]).contentModificationDate
+    }
+
     /// Returns the last access date of the file for the `CacheKey`, if it exists.
     /// - Parameters:
     ///   - key: A `CacheKey` for matching `Data` to a location on disk.
@@ -163,18 +161,9 @@ public actor DiskStorage {
             .resourceValues(forKeys: [.contentAccessDateKey]).contentAccessDate
     }
 
-    /// Returns the modification date for the file represented by the `CacheKey`, if it exists.
-    /// - Parameters:
-    ///   - key: A `CacheKey` for matching `Data` to a location on disk.
-    /// - Returns: The modification date of the `Data` on disk if it exists, nil if there is no `Data` stored for the `CacheKey`.
-    public func lastModified(key: CacheKey) -> Date? {
-        return try? self.concatenatedPath(key: key.value)
-            .resourceValues(forKeys: [.contentModificationDateKey]).contentModificationDate
-    }
-
 }
 
-private extension DiskStorage {
+private extension DiskStorageEngine {
 
     static func createDirectory(url: URL) throws {
         try FileManager.default
@@ -192,7 +181,7 @@ private extension DiskStorage {
     }
 
     func concatenatedPath(key: String) -> URL {
-        return self.folder.appendingPathComponent(key)
+        return self.directory.url.appendingPathComponent(key)
     }
 
 }
