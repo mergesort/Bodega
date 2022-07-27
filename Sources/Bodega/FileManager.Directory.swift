@@ -14,6 +14,17 @@ public extension FileManager {
 
 public extension FileManager.Directory {
 
+    /// A directory that varies based on the OS the user is running code on.
+    /// - Parameter pathComponent: A path to append to the platform's default directory.
+    /// - Returns: On macOS this returns the `Application Support` directory, otherwise `Documents`.
+    static func defaultStorageDirectory(appendingPath pathComponent: String) -> Self {
+#if os(macOS)
+        .applicationSupport(appendingPath: pathComponent)
+#else
+        .documents(appendingPath: pathComponent)
+#endif
+    }
+
     /// Returns a URL to a subfolder created in the documents directory based on the `pathComponent`.
     /// - Parameter pathComponent: A path to append to the platform's documents directory.
     static func documents(appendingPath pathComponent: String) -> Self {
