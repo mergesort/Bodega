@@ -58,16 +58,16 @@ public actor DiskStorageEngine: StorageEngine {
     ///   - keys: A `[CacheKey]` for matching multiple `Data` items to their a location on disk.
     /// - Returns: An array of `[(CacheKey, Data)]` read from disk if the `CacheKey`s exist,
     /// and an empty array if there are no `Data` items matching the `keys` passed in.
-    public func readDataAndKeys(keys: [CacheKey]) -> [(key: CacheKey, data: Data)] {
+    public func readDataAndKeys(keys: [CacheKey]) async -> [(key: CacheKey, data: Data)] {
         return zip(
             keys,
-            self.read(keys: keys)
+            await self.read(keys: keys)
         ).map { ($0, $1) }
     }
 
-    public func readAllData() -> [Data] {
+    public func readAllData() async -> [Data] {
         let allKeys = self.allKeys()
-        return self.read(keys: allKeys)
+        return await self.read(keys: allKeys)
     }
 
     /// Reads all the `Data` located in the `directory` and returns an array
@@ -79,9 +79,9 @@ public actor DiskStorageEngine: StorageEngine {
     /// to know which `CacheKey` led to a piece of `Data` being retrieved
     /// you can use ``readAllData()`` instead.
     /// - Returns: An array of the `[Data]` and it's associated `CacheKey`s contained in a directory.
-    public func readAllDataAndKeys() -> [(key: CacheKey, data: Data)] {
+    public func readAllDataAndKeys() async -> [(key: CacheKey, data: Data)] {
         let allKeys = self.allKeys()
-        return self.readDataAndKeys(keys: allKeys)
+        return await self.readDataAndKeys(keys: allKeys)
     }
 
     /// Removes `Data` from disk based on the associated `CacheKey`.
