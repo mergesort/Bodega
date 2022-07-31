@@ -50,7 +50,6 @@ public actor SQLiteStorageEngine: StorageEngine {
 
             self.connection = try Connection(directory.url.appendingPathComponent(filename).appendingPathExtension("sqlite3").absoluteString)
             self.connection.busyTimeout = 3
-            self.connection.busyHandler({ retryCount in retryCount < 3 })
 
             try self.connection.run(Self.storageTable.create(ifNotExists: true) { table in
                 table.column(Self.expressions.keyRow, primaryKey: true)
