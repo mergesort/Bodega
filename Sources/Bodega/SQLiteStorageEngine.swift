@@ -8,21 +8,21 @@ public actor SQLiteStorageEngine: StorageEngine {
     /// A directory on the filesystem where your `StorageEngine`s data will be stored.
     public var directory: FileManager.Directory
 
-    /// Initializes a new `SQLiteStorageEngine` for persisting `Data` to disk.
+    /// Initializes a new ``SQLiteStorageEngine`` for persisting `Data` to disk.
     ///
-    /// `SQLiteStorageEngine` is significantly faster than `DiskStorageEngine` because it uses SQLite
-    /// rather than saving files to disk. As much `DiskStorageEngine` was optimized, file system operations
+    /// ``SQLiteStorageEngine`` is significantly faster than ``DiskStorageEngine`` because it uses SQLite
+    /// rather than saving files to disk. As much ``DiskStorageEngine`` was optimized, file system operations
     /// like reading and writing have a relatively high cost per operation and SQLite
     /// [has been shown](https://www.sqlite.org/fasterthanfs.html) to be significantly faster than files for storing data.
     ///
     /// If you're not using your own persistence mechanism such as Realm, Core Data, etc,
-    /// it is highly recommended you use `SQLiteStorageEngine` to power your `ObjectStorage`.
+    /// it is highly recommended you use ``SQLiteStorageEngine`` to power your ``ObjectStorage``.
     ///
     /// When initializing a database there is a possibility that the database Connection will fail.
     /// There isn't much reason to expect this, but it is a possibility so this initializer returns an optional.
     ///
     /// Generally creating implicitly unwrapped optionals is frowned upon, but it's worth asking
-    /// what will happen if you use one when initializing a `SQLiteStorageEngine`.
+    /// what will happen if you use one when initializing a ``SQLiteStorageEngine``.
     ///
     /// Code like
     /// ```
@@ -35,7 +35,7 @@ public actor SQLiteStorageEngine: StorageEngine {
     ///
     /// One alternative is to make the initializer `throw`, and that's a perfectly reasonable tradeoff.
     /// While that is doable, I believe it's very unlikely the caller will have specific remedies for
-    /// specific SQLite errors, so for simplicity I've made the initializer return an optional `SQLiteStorageEngine`.
+    /// specific SQLite errors, so for simplicity I've made the initializer return an optional ``SQLiteStorageEngine``.
     ///
     /// - Parameter directory: A directory on the filesystem where your files will be written to.
     /// `FileManager.Directory` is a type-safe wrapper around URL that provides sensible defaults like
@@ -65,7 +65,7 @@ public actor SQLiteStorageEngine: StorageEngine {
     /// Writes `Data` to the database with an associated `CacheKey`.
     /// - Parameters:
     ///   - data: The `Data` being stored to disk.
-    ///   - key: A `CacheKey` for matching `Data`.
+    ///   - key: A ``CacheKey`` for matching `Data`.
     public func write(_ data: Data, key: CacheKey) throws {
         let values = [
             Self.expressions.keyRow <- key.rawValue,
@@ -86,7 +86,7 @@ public actor SQLiteStorageEngine: StorageEngine {
         }
     }
 
-    /// Writes an array of `Data` items to the database with their associated `CacheKey` from the tuple.
+    /// Writes an array of `Data` items to the database with their associated ``CacheKey`` from the tuple.
     /// - Parameters:
     ///   - dataAndKeys: An array of the `[(CacheKey, Data)]` to store
     ///   multiple `Data` items with their associated keys at once.
@@ -104,7 +104,7 @@ public actor SQLiteStorageEngine: StorageEngine {
 
     /// Reads `Data` from disk based on the associated `CacheKey`.
     /// - Parameters:
-    ///   - key: A `CacheKey` for matching `Data`.
+    ///   - key: A ``CacheKey`` for matching `Data`.
     /// - Returns: The `Data` stored if it exists, nil if there is no `Data` stored for the `CacheKey`.
     public func read(key: CacheKey) -> Data? {
         do {
@@ -139,13 +139,13 @@ public actor SQLiteStorageEngine: StorageEngine {
 
     /// Reads `Data` from disk based on the associated `CacheKey`.
     /// - Parameters:
-    ///   - key: A `CacheKey` for matching `Data`.
+    ///   - key: A ``CacheKey`` for matching `Data`.
     /// - Returns: The `Data` stored if it exists, nil if there is no `Data` stored for the `CacheKey`.
 
-    /// This method returns the `CacheKey` and `Data` together in a tuple of `[(CacheKey, Data)]`
-    /// allowing you to know which `CacheKey` led to a specific `Data` item being retrieved.
+    /// This method returns the ``CacheKey`` and `Data` together in a tuple of `[(CacheKey, Data)]`
+    /// allowing you to know which ``CacheKey`` led to a specific `Data` item being retrieved.
     /// This can be useful in allowing manual iteration over data, but if you don't need
-    /// to know which `CacheKey` that led to a piece of `Data` being retrieved
+    /// to know which ``CacheKey`` that led to a piece of `Data` being retrieved
     ///  you can use ``read(keys:)`` instead.
     /// - Parameters:
     ///   - keys: A `[CacheKey]` for matching multiple `Data` items to their a location on disk.
@@ -174,10 +174,10 @@ public actor SQLiteStorageEngine: StorageEngine {
     /// Reads all the `Data` located in the database and returns an array
     /// of `[(CacheKey, Data)]` tuples associated with the `CacheKey`.
     ///
-    /// This method returns the `CacheKey` and `Data` together in an array of `[(CacheKey, Data)]`
-    /// allowing you to know which `CacheKey` led to a specific `Data` item being retrieved.
+    /// This method returns the ``CacheKey`` and `Data` together in an array of `[(CacheKey, Data)]`
+    /// allowing you to know which ``CacheKey`` led to a specific `Data` item being retrieved.
     /// This can be useful in allowing manual iteration over `Data` items, but if you don't need
-    /// to know which `CacheKey` led to a piece of `Data` being retrieved
+    /// to know which ``CacheKey`` led to a piece of `Data` being retrieved
     /// you can use ``readAllData()`` instead.
     /// - Returns: An array of the `[Data]` and it's associated `CacheKey`s.
     public func readAllDataAndKeys() -> [(key: CacheKey, data: Data)] {
@@ -187,7 +187,7 @@ public actor SQLiteStorageEngine: StorageEngine {
 
     /// Removes `Data` from disk based on the associated `CacheKey`.
     /// - Parameters:
-    ///   - key: A `CacheKey` for finding the `Data` to remove.
+    ///   - key: A ``CacheKey`` for finding the `Data` to remove.
     public func remove(key: CacheKey) throws {
         let deleteQuery = Self.storageTable.filter(Self.expressions.keyRow == key.rawValue)
         try self.connection.run(deleteQuery.delete())
@@ -253,7 +253,7 @@ public actor SQLiteStorageEngine: StorageEngine {
 
     /// Returns the date of creation for the `Data` item matching the `CacheKey`, if it exists.
     /// - Parameters:
-    ///   - key: A `CacheKey` for matching `Data`.
+    ///   - key: A ``CacheKey`` for matching `Data`.
     /// - Returns: The creation date of the `Data` on disk if it exists, nil if there is no `Data` stored for the `CacheKey`.
     public func createdAt(key: CacheKey) -> Date? {
         do {
@@ -270,7 +270,7 @@ public actor SQLiteStorageEngine: StorageEngine {
 
     /// Returns the modification date for the `Data` item matching the `CacheKey`, if it exists.
     /// - Parameters:
-    ///   - key: A `CacheKey` for matching `Data` to a location on disk.
+    ///   - key: A ``CacheKey`` for matching `Data` to a location on disk.
     /// - Returns: The modification date of the `Data` on disk if it exists, nil if there is no `Data` stored for the `CacheKey`.
     public func updatedAt(key: CacheKey) -> Date? {
         do {

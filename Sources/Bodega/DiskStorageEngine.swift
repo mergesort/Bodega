@@ -5,7 +5,7 @@ public actor DiskStorageEngine: StorageEngine {
     /// A directory on the filesystem where your `StorageEngine`s data will be stored.
     public var directory: FileManager.Directory
 
-    /// Initializes a new `DiskStorageEngine` for persisting `Data` to disk.
+    /// Initializes a new ``DiskStorageEngine`` for persisting `Data` to disk.
     /// - Parameter directory: A directory on the filesystem where your files will be written to.
     /// `FileManager.Directory` is a type-safe wrapper around URL that provides sensible defaults like
     ///  `.documents(appendingPath:)`, `.caches(appendingPath:)`, and more.
@@ -16,7 +16,7 @@ public actor DiskStorageEngine: StorageEngine {
     /// Writes `Data` to disk based on the associated `CacheKey`.
     /// - Parameters:
     ///   - data: The `Data` being stored to disk.
-    ///   - key: A `CacheKey` for matching `Data` to a location on disk.
+    ///   - key: A ``CacheKey`` for matching `Data` to a location on disk.
     public func write(_ data: Data, key: CacheKey) throws {
         let fileURL = self.concatenatedPath(key: key.value)
         let folderURL = fileURL.deletingLastPathComponent()
@@ -28,7 +28,7 @@ public actor DiskStorageEngine: StorageEngine {
         try data.write(to: fileURL, options: .atomic)
     }
 
-    /// Writes an array of `Data` items to disk based on the associated `CacheKey` passed in the tuple.
+    /// Writes an array of `Data` items to disk based on the associated ``CacheKey`` passed in the tuple.
     /// - Parameters:
     ///   - dataAndKeys: An array of the `[(CacheKey, Data)]` to store
     ///   multiple `Data` items with their associated keys at once.
@@ -40,7 +40,7 @@ public actor DiskStorageEngine: StorageEngine {
 
     /// Reads `Data` from disk based on the associated `CacheKey`.
     /// - Parameters:
-    ///   - key: A `CacheKey` for matching `Data` to a location on disk.
+    ///   - key: A ``CacheKey`` for matching `Data` to a location on disk.
     /// - Returns: The `Data` stored on disk if it exists, nil if there is no `Data` stored for the `CacheKey`.
     public func read(key: CacheKey) -> Data? {
         return try? Data(contentsOf: self.concatenatedPath(key: key.value))
@@ -49,10 +49,10 @@ public actor DiskStorageEngine: StorageEngine {
     /// Reads `Data` from disk based on the associated array of `CacheKey`s provided as a parameter
     /// and returns an array `[(CacheKey, Data)]` associated with the passed in `CacheKey`s.
     ///
-    /// This method returns the `CacheKey` and `Data` together in a tuple of `[(CacheKey, Data)]`
-    /// allowing you to know which `CacheKey` led to a specific `Data` item being retrieved.
+    /// This method returns the ``CacheKey`` and `Data` together in a tuple of `[(CacheKey, Data)]`
+    /// allowing you to know which ``CacheKey`` led to a specific `Data` item being retrieved.
     /// This can be useful in allowing manual iteration over data, but if you don't need
-    /// to know which `CacheKey` that led to a piece of `Data` being retrieved
+    /// to know which ``CacheKey`` that led to a piece of `Data` being retrieved
     ///  you can use ``read(keys:)`` instead.
     /// - Parameters:
     ///   - keys: A `[CacheKey]` for matching multiple `Data` items to their a location on disk.
@@ -73,10 +73,10 @@ public actor DiskStorageEngine: StorageEngine {
     /// Reads all the `Data` located in the `directory` and returns an array
     /// of `[(CacheKey, Data)]` tuples associated with the `CacheKey`.
     ///
-    /// This method returns the `CacheKey` and `Data` together in an array of `[(CacheKey, Data)]`
-    /// allowing you to know which `CacheKey` led to a specific `Data` item being retrieved.
+    /// This method returns the ``CacheKey`` and `Data` together in an array of `[(CacheKey, Data)]`
+    /// allowing you to know which ``CacheKey`` led to a specific `Data` item being retrieved.
     /// This can be useful in allowing manual iteration over `Data` items, but if you don't need
-    /// to know which `CacheKey` led to a piece of `Data` being retrieved
+    /// to know which ``CacheKey`` led to a piece of `Data` being retrieved
     /// you can use ``readAllData()`` instead.
     /// - Returns: An array of the `[Data]` and it's associated `CacheKey`s contained in a directory.
     public func readAllDataAndKeys() async -> [(key: CacheKey, data: Data)] {
@@ -86,7 +86,7 @@ public actor DiskStorageEngine: StorageEngine {
 
     /// Removes `Data` from disk based on the associated `CacheKey`.
     /// - Parameters:
-    ///   - key: A `CacheKey` for matching `Data` to a location on disk.
+    ///   - key: A ``CacheKey`` for matching `Data` to a location on disk.
     public func remove(key: CacheKey) throws {
         do {
             try FileManager.default.removeItem(at: self.concatenatedPath(key: key.value))
@@ -136,7 +136,7 @@ public actor DiskStorageEngine: StorageEngine {
 
     /// Returns the date of creation for the file represented by the `CacheKey`, if it exists.
     /// - Parameters:
-    ///   - key: A `CacheKey` for matching `Data` to a location on disk.
+    ///   - key: A ``CacheKey`` for matching `Data` to a location on disk.
     /// - Returns: The creation date of the `Data` on disk if it exists, nil if there is no `Data` stored for the `CacheKey`.
     public func createdAt(key: CacheKey) -> Date? {
         return try? self.concatenatedPath(key: key.value)
@@ -145,7 +145,7 @@ public actor DiskStorageEngine: StorageEngine {
 
     /// Returns the updatedAt date for the file represented by the `CacheKey`, if it exists.
     /// - Parameters:
-    ///   - key: A `CacheKey` for matching `Data` to a location on disk.
+    ///   - key: A ``CacheKey`` for matching `Data` to a location on disk.
     /// - Returns: The updatedAt date of the `Data` on disk if it exists, nil if there is no `Data` stored for the `CacheKey`.
     public func updatedAt(key: CacheKey) -> Date? {
         return try? self.concatenatedPath(key: key.value)
@@ -154,7 +154,7 @@ public actor DiskStorageEngine: StorageEngine {
 
     /// Returns the last access date of the file for the `CacheKey`, if it exists.
     /// - Parameters:
-    ///   - key: A `CacheKey` for matching `Data` to a location on disk.
+    ///   - key: A ``CacheKey`` for matching `Data` to a location on disk.
     /// - Returns: The last access date of the `Data` on disk if it exists, nil if there is no `Data` stored for the `CacheKey`.
     public func lastAccessed(key: CacheKey) -> Date? {
         return try? self.concatenatedPath(key: key.value)
