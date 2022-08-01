@@ -27,7 +27,7 @@ public actor ObjectStorage<Object: Codable> {
     /// ```
     /// - Parameter storage: A `StorageEngine` to initialize an `ObjectStorage` instance with.
     /// If no parameter is provided the default is `SQLiteStorageEngine(directory: .defaultStorageDirectory(appendingPath: "Data"))`
-    public init(storage: StorageEngine = SQLiteStorageEngine(directory: .defaultStorageDirectory(appendingPath: "Data"))!) {
+    public init(storage: StorageEngine = SQLiteStorageEngine.default) {
         self.storage = storage
     }
 
