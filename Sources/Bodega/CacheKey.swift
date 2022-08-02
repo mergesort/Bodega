@@ -2,7 +2,7 @@ import Foundation
 
 /// ``CacheKey`` is a type meant to provide a stable storage key.
 /// If initialized from a URL the ``CacheKey`` value will generate
-/// a stable UUID-formatted MD5 version of the URL string as the key
+/// a consistent UUID-formatted MD5 version of the URL string as the key
 /// to ensure it is file system safe.
 public struct CacheKey: Codable, Equatable, Hashable {
 
@@ -10,7 +10,7 @@ public struct CacheKey: Codable, Equatable, Hashable {
     public let value: String
 
     /// The `String` that was passed in to any initializer, regardless of whether it was hashed afterwards or not.
-    /// Currently this is used in `StorageEngine`s that are not file system based
+    /// Currently this is used in ``StorageEngine``s that are not file system based
     /// and will be deprecated in the future, when ``CacheKey`` is [deprecated](https://github.com/mergesort/Bodega/issues/9).
     internal let rawValue: String
 
@@ -29,17 +29,17 @@ public struct CacheKey: Codable, Equatable, Hashable {
     }
 
     /// Initializes a ``CacheKey`` from a `String`, creating a hashed version of the input `String`.
-    /// This initializer is useful if you plan on using `CacheKey`s for storing files on disk
+    /// This initializer is useful if you plan on using ``CacheKey``s for storing files on disk
     /// because file have many limitations about characters that are allowed in file names,
     /// and the maximum length of a file name.
-    /// - Parameter value: The `String` which will serve as the underlying value for this `CacheKey`.
+    /// - Parameter value: The `String` which will serve as the underlying value for this ``CacheKey``.
     public init(_ value: String) {
         self.rawValue = value
         self.value = value.md5.uuidFormatted ?? value.md5
     }
 
-    /// Initializes a ``CacheKey`` from a `String`, using the exact `String` as the value of the `CacheKey`.
-    /// - Parameter value: The `String` which will serve as the underlying value for this `CacheKey`.
+    /// Initializes a ``CacheKey`` from a `String`, using the exact `String` as the value of the ``CacheKey``.
+    /// - Parameter value: The `String` which will serve as the underlying value for this ``CacheKey``.
     public init(verbatim value: String) {
         self.rawValue = value
         self.value = value

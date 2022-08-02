@@ -2,6 +2,8 @@ import Foundation
 
 public extension FileManager {
 
+    /// A strongly typed directory allowing for easily specifying
+    /// defaults like `documents`, `caches`, `temporary`, etc.
     struct Directory {
         public let url: URL
 
@@ -14,7 +16,7 @@ public extension FileManager {
 
 public extension FileManager.Directory {
 
-    /// A directory that varies based on the OS the user is running code on.
+    /// Returns a directory that varies based on the OS the app is running on.
     /// - Parameter pathComponent: A path to append to the platform's default directory.
     /// - Returns: On macOS this returns the `Application Support` directory, otherwise `Documents`.
     static func defaultStorageDirectory(appendingPath pathComponent: String) -> Self {
@@ -63,6 +65,8 @@ public extension FileManager.Directory {
     }
 
     @available(macOS 11, *)
+    /// Returns a URL to a subfolder created in the Application Support directory based on the `pathComponent`.
+    ///   - pathComponent: A path to append to the app's group shared directory.
     static func applicationSupport(appendingPath pathComponent: String) -> Self {
         self.init(
             url: FileManager.default.urls(for: .applicationSupportDirectory, in: .userDomainMask).first!.appendingPathComponent(pathComponent)

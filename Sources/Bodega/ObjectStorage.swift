@@ -1,5 +1,20 @@
 import Foundation
 
+/// An unified layer over a ``StorageEngine`` primitives, allowing you to read, write, and save Swift objects.
+///
+/// An ``ObjectStorage`` is a higher level abstraction than a ``StorageEngine``, allowing you
+/// to interact with Swift objects, never thinking about the persistence layer that's saving
+/// objects under the hood.
+///
+/// If you do not provide a ``StorageEngine`` parameter then ``ObjectStorage`` will default to
+/// using an ``SQLiteStorageEngine``, with a database located in the app's Documents directory.
+///
+/// The ``SQLiteStorageEngine`` is a safe, fast, and easy database to based on SQLite,
+/// but if you prefer to use your own persistence layer or want to save your objects
+/// to another location, you can use the `storage` parameter like so
+/// ```
+/// SQLiteStorageEngine(directory: .defaultStorageDirectory(appendingPath: "Assets"))
+/// ```
 public actor ObjectStorage<Object: Codable> {
 
     private let storage: StorageEngine
@@ -11,23 +26,8 @@ public actor ObjectStorage<Object: Codable> {
     private let decoder = JSONDecoder()
 
     /// Initializes a new ``ObjectStorage`` object for persisting `Object`s.
-    ///
-    /// An ``ObjectStorage`` is a higher level abstraction than a ``StorageEngine``, allowing you
-    /// to interact with Swift objects, never thinking about the persistence layer that's saving
-    /// objects under the hood.
-    ///
-    /// If you do not provide a ``StorageEngine`` parameter then ``ObjectStorage`` will default to
-    /// using an ``SQLiteStorageEngine``, with a database located in the app's Documents directory.
-    ///
-    /// The ``SQLiteStorageEngine`` is a safe, fast, and easy database to based on SQLite,
-    /// but if you prefer to use your own persistence layer or want to save your objects
-    /// to another location, you can use the `storage` parameter like so
-    /// ```
-    /// SQLiteStorageEngine(directory: .documents(appendingPath: "Assets"))
-    /// ```
     /// - Parameter storage: A ``StorageEngine`` to initialize an ``ObjectStorage`` instance with.
-    /// If no parameter is provided the default is `SQLiteStorageEngine(directory: .defaultStorageDirectory(appendingPath: "Data"))`
-    public init(storage: StorageEngine = SQLiteStorageEngine.default) {
+    public init(storage: StorageEngine) {
         self.storage = storage
     }
 
@@ -64,7 +64,7 @@ public actor ObjectStorage<Object: Codable> {
     /// Reads `Object`s based on the associated array of ``CacheKey``s provided as a parameter.
     /// - Parameters:
     ///   - keys: A `[CacheKey]` for matching multiple `Object`s.
-    /// - Returns: An array of `[Object]`s stored if the `CacheKey`s exist,
+    /// - Returns: An array of `[Object]`s stored if the ``CacheKey``s exist,
     /// and an `[]` if there are no `Object`s matching the `keys` passed in.
     public func objects(forKeys keys: [CacheKey]) async -> [Object] {
         let dataItems = await storage.read(keys: keys)
@@ -77,7 +77,7 @@ public actor ObjectStorage<Object: Codable> {
     }
 
     /// Reads `Object`s based on the associated array of ``CacheKey``s provided as a parameter
-    /// and returns an array `[(CacheKey, Object)]` associated with the passed in `CacheKey`s.
+    /// and returns an array `[(CacheKey, Object)]` associated with the passed in ``CacheKey``s.
     ///
     /// This method returns the ``CacheKey`` and `Object` together in a tuple of `[(CacheKey, Object)]`
     /// allowing you to know which ``CacheKey`` led to a specific `Object` being retrieved.
@@ -109,7 +109,7 @@ public actor ObjectStorage<Object: Codable> {
     /// This can be useful in allowing manual iteration over `Object`s, but if you
     /// don't need to know which ``CacheKey`` led to an `Object` being retrieved
     /// you can use ``allObjects()`` instead.
-    /// - Returns: An array of `Object`s and it's associated `CacheKey`s contained in a directory.
+    /// - Returns: An array of `Object`s and it's associated ``CacheKey``s contained in a directory.
     public func allObjectsAndKeys() async -> [(key: CacheKey, object: Object)] {
         let allKeys = await self.allKeys()
         return await self.objectsAndKeys(keys: allKeys)
@@ -122,7 +122,7 @@ public actor ObjectStorage<Object: Codable> {
         try await storage.remove(key: key)
     }
 
-    /// Removes `[Object]`s from the underlying Storage based on the associated array of `[CacheKey]`s provided as a parameter.
+    /// Removes `[Object]`s from the underlying Storage based on the associated array of ``CacheKey``s provided as a parameter.
     /// - Parameters:
     ///   - keys: A `[CacheKey]` for matching multiple `Object`s.
     public func removeObject(forKeys keys: [CacheKey]) async throws {

@@ -1,9 +1,23 @@
 import Foundation
 
+/// A ``StorageEngine`` based on saving items to the file system.
+///
+/// The ``DiskStorageEngine`` prioritizes simplicity over speed, it is very easy to use and understand.
+/// A ``DiskStorageEngine`` will write a one file for every object you save, which makes
+/// it easy to inspect and debug any objects you're saving.
+///
+/// Initialization times vary based on the total number of objects you have saved,
+/// but a simple rule of thumb is that loading 1,000 objects from disk takes about 0.25 seconds.
+/// This can start to feel a bit slow if you are saving more than 2,000-3,000, at which point
+/// it may be worth investigating alternative ``StorageEngine``s.
+///
+/// If performance is of import, ``Bodega`` ships ``SQLiteStorageEngine``, and that is the recommended
+/// default ``StorageEngine``. If you have your own persistence layer such as Realm, Core Data, etc,
+/// you can easily build your own ``StorageEngine`` to plug into ``ObjectStorage``.
 public actor DiskStorageEngine: StorageEngine {
 
-    /// A directory on the filesystem where your `StorageEngine`s data will be stored.
-    public var directory: FileManager.Directory
+    /// A directory on the filesystem where your ``StorageEngine``s data will be stored.
+    private let directory: FileManager.Directory
 
     /// Initializes a new ``DiskStorageEngine`` for persisting `Data` to disk.
     /// - Parameter directory: A directory on the filesystem where your files will be written to.
@@ -13,7 +27,7 @@ public actor DiskStorageEngine: StorageEngine {
         self.directory = directory
     }
 
-    /// Writes `Data` to disk based on the associated `CacheKey`.
+    /// Writes `Data` to disk based on the associated ``CacheKey``.
     /// - Parameters:
     ///   - data: The `Data` being stored to disk.
     ///   - key: A ``CacheKey`` for matching `Data` to a location on disk.
@@ -38,7 +52,7 @@ public actor DiskStorageEngine: StorageEngine {
         }
     }
 
-    /// Reads `Data` from disk based on the associated `CacheKey`.
+    /// Reads `Data` from disk based on the associated ``CacheKey``.
     /// - Parameters:
     ///   - key: A ``CacheKey`` for matching `Data` to a location on disk.
     /// - Returns: The `Data` stored on disk if it exists, nil if there is no `Data` stored for the `CacheKey`.
@@ -46,8 +60,8 @@ public actor DiskStorageEngine: StorageEngine {
         return try? Data(contentsOf: self.concatenatedPath(key: key.value))
     }
 
-    /// Reads `Data` from disk based on the associated array of `CacheKey`s provided as a parameter
-    /// and returns an array `[(CacheKey, Data)]` associated with the passed in `CacheKey`s.
+    /// Reads `Data` from disk based on the associated array of ``CacheKey``s provided as a parameter
+    /// and returns an array `[(CacheKey, Data)]` associated with the passed in ``CacheKey``s.
     ///
     /// This method returns the ``CacheKey`` and `Data` together in a tuple of `[(CacheKey, Data)]`
     /// allowing you to know which ``CacheKey`` led to a specific `Data` item being retrieved.
@@ -55,8 +69,8 @@ public actor DiskStorageEngine: StorageEngine {
     /// to know which ``CacheKey`` that led to a piece of `Data` being retrieved
     ///  you can use ``read(keys:)`` instead.
     /// - Parameters:
-    ///   - keys: A `[CacheKey]` for matching multiple `Data` items to their a location on disk.
-    /// - Returns: An array of `[(CacheKey, Data)]` read from disk if the `CacheKey`s exist,
+    ///   - keys: A `[CacheKey]` for matching multiple `Data` items.
+    /// - Returns: An array of `[(CacheKey, Data)]` read from disk if the ``CacheKey``s exist,
     /// and an empty array if there are no `Data` items matching the `keys` passed in.
     public func readDataAndKeys(keys: [CacheKey]) async -> [(key: CacheKey, data: Data)] {
         return zip(
@@ -65,13 +79,15 @@ public actor DiskStorageEngine: StorageEngine {
         ).map { ($0, $1) }
     }
 
+    /// Reads all the `[Data]` located in the `directory`.
+    /// - Returns: An array of the `[Data]` contained on disk.
     public func readAllData() async -> [Data] {
         let allKeys = self.allKeys()
         return await self.read(keys: allKeys)
     }
 
     /// Reads all the `Data` located in the `directory` and returns an array
-    /// of `[(CacheKey, Data)]` tuples associated with the `CacheKey`.
+    /// of `[(CacheKey, Data)]` tuples associated with the ``CacheKey``.
     ///
     /// This method returns the ``CacheKey`` and `Data` together in an array of `[(CacheKey, Data)]`
     /// allowing you to know which ``CacheKey`` led to a specific `Data` item being retrieved.
@@ -84,7 +100,7 @@ public actor DiskStorageEngine: StorageEngine {
         return await self.readDataAndKeys(keys: allKeys)
     }
 
-    /// Removes `Data` from disk based on the associated `CacheKey`.
+    /// Removes `Data` from disk based on the associated ``CacheKey``.
     /// - Parameters:
     ///   - key: A ``CacheKey`` for matching `Data` to a location on disk.
     public func remove(key: CacheKey) throws {
@@ -134,7 +150,7 @@ public actor DiskStorageEngine: StorageEngine {
         }
     }
 
-    /// Returns the date of creation for the file represented by the `CacheKey`, if it exists.
+    /// Returns the date of creation for the file represented by the ``CacheKey``, if it exists.
     /// - Parameters:
     ///   - key: A ``CacheKey`` for matching `Data` to a location on disk.
     /// - Returns: The creation date of the `Data` on disk if it exists, nil if there is no `Data` stored for the `CacheKey`.
@@ -143,19 +159,19 @@ public actor DiskStorageEngine: StorageEngine {
             .resourceValues(forKeys: [.creationDateKey]).creationDate
     }
 
-    /// Returns the updatedAt date for the file represented by the `CacheKey`, if it exists.
+    /// Returns the updatedAt date for the file represented by the ``CacheKey``, if it exists.
     /// - Parameters:
     ///   - key: A ``CacheKey`` for matching `Data` to a location on disk.
-    /// - Returns: The updatedAt date of the `Data` on disk if it exists, nil if there is no `Data` stored for the `CacheKey`.
+    /// - Returns: The updatedAt date of the `Data` on disk if it exists, nil if there is no `Data` stored for the ``CacheKey``.
     public func updatedAt(key: CacheKey) -> Date? {
         return try? self.concatenatedPath(key: key.value)
             .resourceValues(forKeys: [.contentModificationDateKey]).contentModificationDate
     }
 
-    /// Returns the last access date of the file for the `CacheKey`, if it exists.
+    /// Returns the last access date of the file for the ``CacheKey``, if it exists.
     /// - Parameters:
     ///   - key: A ``CacheKey`` for matching `Data` to a location on disk.
-    /// - Returns: The last access date of the `Data` on disk if it exists, nil if there is no `Data` stored for the `CacheKey`.
+    /// - Returns: The last access date of the `Data` on disk if it exists, nil if there is no `Data` stored for the ``CacheKey``.
     public func lastAccessed(key: CacheKey) -> Date? {
         return try? self.concatenatedPath(key: key.value)
             .resourceValues(forKeys: [.contentAccessDateKey]).contentAccessDate

@@ -1,14 +1,14 @@
 public extension SQLiteStorageEngine {
 
-    /// An `SQLiteStorageEngine` located in the platform-specific default storage directory.
+    /// An ``SQLiteStorageEngine`` located in the platform-specific default storage directory.
     ///
     /// Equivalent to:
     /// `SQLiteStorageEngine(directory: .defaultStorageDirectory(appendingPath: "Data"))`
     static var `default`: SQLiteStorageEngine {
-        SQLiteStorageEngine(directory: .defaultStorageDirectory(appendingPath: "Data"))!
+        self.default(appendingPath: "Data")
     }
 
-    /// An `SQLiteStorageEngine` located in the platform-specific default storage directory.
+    /// An ``SQLiteStorageEngine`` located in the platform-specific default storage directory.
     ///
     /// Equivalent to:
     /// `SQLiteStorageEngine(directory: .defaultStorageDirectory(appendingPath: "Your Path"))`
