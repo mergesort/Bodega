@@ -6,14 +6,18 @@ If you find Bodega valuable I would really appreciate it if you would consider h
 
 ---
 
-Is this library the best caching library? Absolutely not. But as a born and raised New Yorker I can attest that nobody thinks a [bodega](https://en.wikipedia.org/wiki/Bodega_(store)) is the best store either, yet we appreciate 'em and what they do for us. Like a bodega this library is there for you when you need something simple and you want it to work.
+As a born and raised New Yorker I can attest that [bodegas](https://en.wikipedia.org/wiki/Bodega_(store)) act as humble infrastructure for our city, and Bodega aims to do that as well. We appreciate what bodegas do for us, yet it's their simplicity and prevalence that almost makes us forget they're here.
 
-Bodega is a straightforward actor-based library for writing files to disk with an incredibly simple API. Bodega is fully usable and useful on its own, but it's also the foundation of [Boutique](https://github.com/mergesort/Boutique). You can find a reference implementation of an app built atop the Model View Controller Store architecture in this [repo](https://github.com/mergesort/MVCS) which shows you how to make an offline-ready realtime updating SwiftUI app in only a few lines of code. You can read more about the thinking behind the architecture in this blog post exploring the [MVCS architecture](https://build.ms/2022/06/22/model-view-controller-store).
+Bodega is an actor-based library that started as a simple cache based on reading and writing files to/from disk with an incredibly simple API. The `DiskStorageEngine` still provides that functionality, but Bodega has also blossomed into so much more, offering a form of infrastructure that any app's data can use.
+
+Bodega's `StorageEngine` is at the heart of what's possible. Conforming any database, persistence layer, or even an API server, to the `StorageEngine` protocol automatically provides an incredibly simple data layer for your app thanks to Bodega's `ObjectStorage`. Rather than `Data` and databases developers interact with their app's Swift types no matter what those may be, have a unified API, and concurrency handled out of the box.
+
+Bodega is fully usable and useful on its own, but it's also the foundation of [Boutique](https://github.com/mergesort/Boutique). You can find a reference implementation of an app built atop Boutique in the [Boutique Demo folder](https://github.com/mergesort/Boutique/tree/main/Boutique%20Demo), showing you how to make an offline-ready realtime updating SwiftUI app in only a few lines of code. You can read more about the thinking behind the architecture in this blog post exploring Boutique and the [Model View Controller Store architecture](https://build.ms/2022/06/22/model-view-controller-store).
 
 ---
 
 * [Getting Started](#getting-started)
-* [DiskStorage](#diskstorage)
+* [StorageEngine](#storage-engines)
 * [ObjectStorage](#objectstorage)
 * [Further Exploration](#further-exploration)
 
@@ -21,7 +25,7 @@ Bodega is a straightforward actor-based library for writing files to disk with a
 
 ### Getting Started
 
-Bodega provides two kinds of storage for you, `DiskStorage` and `ObjectStorage`. `DiskStorage` is for writing `Data` to disk, and `ObjectStorage` builds upon `DiskStorage` allowing you to save any `Codable` object using a very similar API.
+Bodega provides two kinds of storage primitives for you, `StorageEngine` and `ObjectStorage`. A `StorageEngine` is for writing `Data` to a persistence layer, whether it's files on disk, SQLite, or your own database. An `ObjectStorage` offers a unified layer over `StorageEngine`s, providing a single API for saving `Codable` objects to any `StorageEngine` you choose. `Bodega` offers `DiskStorageEngine` and `SQLiteStorageEngine` by default, or you can even build a `StorageEngine` based on your app's API server if you want a simple way to interface with your API. You can even compose storage engines to create a complex data pipeline that hits your API and saves items into a database, all in one API call. The possibilities are endless.
 
 ---
 
