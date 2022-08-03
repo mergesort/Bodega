@@ -17,3 +17,11 @@ jobs:
       run: swift build -v
     - name: Run tests
       run: swift test -v
+
+    - uses: fwcd/swift-docc-action@v1
+      with:
+        target: Bodega
+        output: ./docs
+        hosting-base-path: Bodega
+        disable-indexing: 'true'
+        transform-for-static-hosting: 'true'
