@@ -22,6 +22,5 @@ jobs:
       with:
         target: Bodega
         output: ./docs
-        hosting-base-path: Bodega
         disable-indexing: 'true'
         transform-for-static-hosting: 'true'
