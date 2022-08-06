@@ -11,7 +11,7 @@ import Foundation
 /// This can start to feel a bit slow if you are saving more than 2,000-3,000, at which point
 /// it may be worth investigating alternative ``StorageEngine``s.
 ///
-/// If performance is of import, ``Bodega`` ships ``SQLiteStorageEngine``, and that is the recommended
+/// If performance is important ``Bodega`` ships ``SQLiteStorageEngine``, and that is the recommended
 /// default ``StorageEngine``. If you have your own persistence layer such as Realm, Core Data, etc,
 /// you can easily build your own ``StorageEngine`` to plug into ``ObjectStorage``.
 public actor DiskStorageEngine: StorageEngine {
