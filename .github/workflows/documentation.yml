@@ -10,7 +10,6 @@ jobs:
   update_documentation:
     name: Update documentation
     runs-on: macos-12
-    needs: build
     steps:
       - name: Checkout repository
         uses: actions/checkout@v3
@@ -31,5 +30,5 @@ jobs:
           git config user.name github-actions
           git config user.email github-actions@github.com
           git add ./docs/**
-          git commit -m "chore(documentation): Generate documentation"
+          git commit -m "Generating documentation"
           git push
