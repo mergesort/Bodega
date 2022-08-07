@@ -6,6 +6,8 @@ If you find Bodega valuable I would really appreciate it if you would consider h
 
 ---
 
+## If you're getting started with Bodega today, it is highly recommended that you use the [2.0 release candidate](https://github.com/mergesort/Bodega/releases/tag/2.0.0-rc-1). The update is feature complete with only minor or likely no changes expected. It will be officially released when I finish adding documentation to provide tutorials, best practices, and updated sample projects. While v2 is a huge upgrade, the API changes from 1.0 are minimal enough that it shouldn't be difficult to get started without updated docs in the mean time.
+
 As a born and raised New Yorker I can attest that [bodegas](https://en.wikipedia.org/wiki/Bodega_(store)) act as humble infrastructure for our city, and Bodega aims to do that as well. We appreciate what bodegas do for us, yet it's their simplicity and prevalence that almost makes us forget they're here.
 
 Bodega is an actor-based library that started as a simple cache based on reading and writing files to/from disk with an incredibly simple API. The `DiskStorageEngine` still provides that functionality, but Bodega has also blossomed into so much more, offering a form of infrastructure that any app's data can use.
