@@ -12,7 +12,14 @@ This library has two implementations of ``StorageEngine``, ``DiskStorageEngine``
 
 If your app already has a persistence layer then all you need to do is conform to the ``StorageEngine`` protocol. You can turn to the <doc:Building-A-StorageEngine> tutorial to learn how to create your own ``StorageEngine``, or you can use ``DiskStorageEngine`` and ``SQLiteStorageEngine`` as references.
 
-For now let's discuss the ``StorageEngine``s that are built-in with Bodega.
+For now let's discuss Bodega's built-in ``StorageEngine`` options.
+
+## Which StorageEngine Is Right For You?
+
+The answer should almost always be ``SQLiteStorageEngine``. The reason why is simple, it's significantly faster. If your app is storing any meaningful amount of objects then a ``DiskStorageEngine``-backed ``ObjectStorage`` will end up feeling a bit slow. But if you're not worried about performance and would prefer the ability to inspect the output without an SQLite editor, then using ``DiskStorageEngine`` is a reasonable choice.
+
+If your app already has a persistence layer it may make sense to build your own ``StorageEngine``. If you'd like to explore that option you can read through the <doc:Building-A-StorageEngine> tutorial, or use ``DiskStorageEngine`` and ``SQLiteStorageEngine`` as references.
+
 
 ## DiskStorageEngine
 
@@ -37,12 +44,6 @@ As the name implies, ``SQLiteStorageEngine`` is a ``StorageEngine`` based on an 
 ``SQLiteStorageEngine`` is the default because it is significantly faster than ``DiskStorageEngine``. As much as ``DiskStorageEngine`` was optimized, file system operations like writing and removing files have a relatively high cost per operation. SQLite on the other hand [has been shown](https://www.sqlite.org/fasterthanfs.html) to be significantly faster than files for storing data.
 
 The simplest way to get started with ``SQLiteStorageEngine`` is to use one of the defaults, `SQLiteStorageEngine.default`, or `SQLiteStorageEngine.default(appendingPath:)`. This will create an ``SQLiteStorageEngine`` in a platform-specific default storage directory, equivalent to `SQLiteStorageEngine(directory: .defaultStorageDirectory(appendingPath: "Your Path"))`.
-
-## Which Should You Choose?
-
-The answer should almost always be ``SQLiteStorageEngine``. The reason why is simple, it's significantly faster. If your app is storing any meaningful amount of objects then a ``DiskStorageEngine``-backed ``ObjectStorage`` will end up feeling a bit slow. But if you're not worried about performance and would prefer the ability to inspect the output without an SQLite editor, then using ``DiskStorageEngine`` is a reasonable choice.
-
-If your app already has a persistence layer it may make sense to build your own ``StorageEngine``. If you'd like to explore that option you can read through the <doc:Building-A-StorageEngine> tutorial, or use ``DiskStorageEngine`` and ``SQLiteStorageEngine`` as references.
 
 ## Topics
 
