@@ -102,6 +102,18 @@ If you'd like to learn more about how it works you can read about the philosophy
 
 ---
 
+### Feedback
+
+This project provides multiple forms of delivering feedback to maintainers.
+
+- If you have a question about Bodega, we ask that you first consult the [documentation](https://build.ms/bodega/docs) to see if your question has been answered there.
+
+- If you still have a question, enhancement, or a way to improve Bodega, this project leverages GitHub's [Discussions](https://github.com/mergesort/Bodega/discussions) feature.
+
+- If you find a bug and wish to report an [issue](https://github.com/mergesort/Bodega/issues) would be appreciated.
+
+---
+
 ### Requirements
 
 - iOS 13.0+
