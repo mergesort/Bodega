@@ -1,13 +1,10 @@
 import Foundation
 
-/// An unified layer over a ``StorageEngine`` primitives, allowing you to read, write, and save Swift objects.
+/// A unified layer over a ``StorageEngine`` primitives, allowing you to read, write, and save Swift objects.
 ///
 /// An ``ObjectStorage`` is a higher level abstraction than a ``StorageEngine``, allowing you
 /// to interact with Swift objects, never thinking about the persistence layer that's saving
 /// objects under the hood.
-///
-/// If you do not provide a ``StorageEngine`` parameter then ``ObjectStorage`` will default to
-/// using an ``SQLiteStorageEngine``, with a database located in the app's Documents directory.
 ///
 /// The ``SQLiteStorageEngine`` is a safe, fast, and easy database to based on SQLite,
 /// but if you prefer to use your own persistence layer or want to save your objects
