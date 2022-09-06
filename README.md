@@ -1,6 +1,6 @@
 ![Bodega Logo](Images/logo.jpg)
 
-### An actor-based store, simple or complex caching for any iOS or Mac app. 🏪
+### An actor-based data layer, helping you build simple or complex stores for any iOS or Mac app. 🏪
 
 If you find Bodega valuable I would really appreciate it if you would consider helping [sponsor my open source work](https://github.com/sponsors/mergesort), so I can continue to work on projects like Bodega to help developers like yourself.
 
