@@ -10,7 +10,33 @@ This library has two implementations of ``StorageEngine``, ``DiskStorageEngine``
 
 ``DiskStorageEngine`` takes `Data` and saves it to disk using file system operations. ``SQLiteStorageEngine`` takes `Data` and transparently saves it to an SQLite database. This is fundamentally how a ``StorageEngine`` works, the protocol provides a blueprint for how to map Swift values and objects to `Data`, and how to map `Data` back to Swift types. 
 
-If your app already has a persistence layer then you can create a ``StorageEngine`` by conforming to the ``StorageEngine``, such as creating a `CoreDataStorageEngine`, `RealmStorageEngine`, or even `CloudKitStorageEngine` to handle the needs of your app. ``DiskStorageEngine`` and ``SQLiteStorageEngine`` both serve as good references for building your own ``StorageEngine``.
+If your app already has a persistence layer then you can create a ``StorageEngine`` by conforming to the ``StorageEngine`` protocol.
+
+```swift
+public protocol StorageEngine: Actor {
+    func write(_ data: Data, key: CacheKey) async throws
+    func write(_ dataAndKeys: [(key: CacheKey, data: Data)]) async throws
+
+    func read(key: CacheKey) async -> Data?
+    func read(keys: [CacheKey]) async -> [Data]
+    func readDataAndKeys(keys: [CacheKey]) async -> [(key: CacheKey, data: Data)]
+    func readAllData() async -> [Data]
+    func readAllDataAndKeys() async -> [(key: CacheKey, data: Data)]
+
+    func remove(key: CacheKey) async throws
+    func remove(keys: [CacheKey]) async throws
+    func removeAllData() async throws
+
+    func keyExists(_ key: CacheKey) async -> Bool
+    func keyCount() async -> Int
+    func allKeys() async -> [CacheKey]
+
+    func createdAt(key: CacheKey) async -> Date?
+    func updatedAt(key: CacheKey) async -> Date?
+}
+```
+
+Building a custom ``StorageEngine`` can be very powerful. If you create a ``StorageEngine`` such as `CoreDataStorageEngine`, `RealmStorageEngine`, or even `CloudKitStorageEngine` you can build an abstraction that plugs into ``ObjectStorage`` or Boutique, meeting the needs of your app without needing to change your app's persistence layer. ``DiskStorageEngine`` and ``SQLiteStorageEngine`` both serve as good references for building your own ``StorageEngine``.
 
 For now let's discuss Bodega's built-in ``StorageEngine`` options.
 
