@@ -38,6 +38,14 @@ final class DiskStorageEngineTests: XCTestCase {
         XCTAssertEqual(Self.storedKeysAndData.map(\.data), readKeysAndObjects.map(\.data))
     }
 
+    func testWritingEmptyDataAndKeys() async throws {
+        // This test ensures that writing an empty array does not throw an error as it did in previous versions
+        try await storage.write([])
+
+        let itemCount = await storage.keyCount()
+        XCTAssertEqual(itemCount, 0)
+    }
+
     func testReadingDataSucceeds() async throws {
         try await storage.write(Self.testData, key: Self.testCacheKey)
         let readData = await storage.read(key: Self.testCacheKey)
