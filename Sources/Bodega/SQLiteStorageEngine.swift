@@ -92,6 +92,8 @@ public actor SQLiteStorageEngine: StorageEngine {
     ///   - dataAndKeys: An array of the `[(CacheKey, Data)]` to store
     ///   multiple `Data` items with their associated keys at once.
     public func write(_ dataAndKeys: [(key: CacheKey, data: Data)]) throws {
+        guard !dataAndKeys.isEmpty else { return }
+        
         let values = dataAndKeys.map({[
             Self.expressions.keyRow <- $0.key.rawValue,
             Self.expressions.dataRow <- $0.data,
@@ -198,6 +200,8 @@ public actor SQLiteStorageEngine: StorageEngine {
     /// - Parameters:
     ///   - keys: A `[CacheKey]` for matching multiple `Data` items to remove.
     public func remove(keys: [CacheKey]) throws {
+        guard !keys.isEmpty else { return }
+
         let deleteQuery = Self.storageTable.select(Self.expressions.keyRow, Self.expressions.dataRow)
             .where(keys.map(\.rawValue).contains(Self.expressions.keyRow))
             .limit(keys.count)
