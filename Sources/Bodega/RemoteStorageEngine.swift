@@ -42,12 +42,10 @@ public struct Paginator<Cursor, Item>: AsyncSequence {
 
     func next() async throws -> Element? {
       if finished {
-        print("Finished, terminating sequence.")
         return nil
       }
 
       let (nextCursor, results) = try await fetch(cursor)
-      print("Fetched \(results.count) items, nextCursor: \(String(describing: nextCursor))")
       cursor = nextCursor
       finished = nextCursor == nil
 
