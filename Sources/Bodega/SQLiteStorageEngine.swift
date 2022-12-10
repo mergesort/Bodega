@@ -303,12 +303,12 @@ public actor SQLiteStorageEngine: RemoteStorageEngine {
   public typealias PaginationCursor = Int
 
   public func readDataAndKeys(options: PaginationOptions) -> Paginator<Int, (key: CacheKey, data: Data)> {
-    var offset = 0
+    Paginator { cursor in
+      var offset = cursor ?? 0
 
-    return Paginator { cursor in
       let limit = options.limit ?? 50
       let query = Self.storageTable.select(Self.expressions.keyRow, Self.expressions.dataRow)
-        .limit(limit, offset: cursor ?? 0)
+        .limit(limit, offset: offset)
 
       do {
           let result = try self.connection.prepare(query)
