@@ -29,7 +29,7 @@ import SQLite
 /// One alternative is to make the initializer `throw`, and that's a perfectly reasonable tradeoff.
 /// While that is doable, I believe it's very unlikely the caller will have specific remedies for
 /// specific SQLite errors, so for simplicity I've made the initializer return an optional ``SQLiteStorageEngine``.
-public actor SQLiteStorageEngine: StorageEngine {
+public actor SQLiteStorageEngine: RemoteStorageEngine {
 
     private let connection: Connection
 
@@ -290,6 +290,38 @@ public actor SQLiteStorageEngine: StorageEngine {
         }
     }
 
+  // MARK: RemoteStorageEngine
+
+  public struct PaginationOptions {
+    public let limit: Int?
+
+    public init(limit: Int?) {
+      self.limit = limit
+    }
+  }
+
+  public typealias PaginationCursor = Int
+
+  public func readDataAndKeys(options: PaginationOptions) -> Paginator<Int, (key: CacheKey, data: Data)> {
+    var offset = 0
+
+    return Paginator { cursor in
+      let limit = options.limit ?? 50
+      let query = Self.storageTable.select(Self.expressions.keyRow, Self.expressions.dataRow)
+        .limit(limit, offset: cursor ?? 0)
+
+      do {
+          let result = try self.connection.prepare(query)
+              .map({ (key: CacheKey(verbatim: $0[Self.expressions.keyRow]), data: $0[Self.expressions.dataRow]) })
+
+        offset += result.count
+        let hasMoreItems = result.count == limit
+        return (hasMoreItems ? offset : nil, result)
+      } catch {
+          return (nil, [])
+      }
+    }
+  }
 }
 
 private extension SQLiteStorageEngine {
