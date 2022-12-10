@@ -3,7 +3,6 @@ import Foundation
 public protocol RemoteStorageEngine: StorageEngine {
   associatedtype PaginationOptions
   associatedtype PaginationCursor
-//  associatedtype PaginationResult: AsyncSequence where PaginationResult.Element == [Data]
 
   func readDataAndKeys(options: PaginationOptions) -> Paginator<PaginationCursor, (key: CacheKey, data: Data)>
 }
