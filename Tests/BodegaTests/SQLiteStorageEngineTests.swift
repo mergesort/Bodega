@@ -263,23 +263,23 @@ final class SQLiteStorageEngineTests: XCTestCase {
         XCTAssertNotEqual(firstWriteDate, secondWriteDate)
     }
 
-  func testPagination() async throws {
-    try await self.writeItemsToDatabase(count: 101)
+    func testPagination() async throws {
+        try await self.writeItemsToDatabase(count: 101)
 
-    let paginator = await storage.readDataAndKeys(options: .init(limit: 50)).makeAsyncIterator()
+        let paginator = await storage.readDataAndKeys(options: .init(limit: 50)).makeAsyncIterator()
 
-    var page = try await paginator.next()
-    XCTAssertEqual(page?.count, 50)
+        var page = try await paginator.next()
+        XCTAssertEqual(page?.count, 50)
 
-    page = try await paginator.next()
-    XCTAssertEqual(page?.count, 50)
+        page = try await paginator.next()
+        XCTAssertEqual(page?.count, 50)
 
-    page = try await paginator.next()
-    XCTAssertEqual(page?.count, 1)
+        page = try await paginator.next()
+        XCTAssertEqual(page?.count, 1)
 
-    page = try await paginator.next()
-    XCTAssertNil(page)
-  }
+        page = try await paginator.next()
+        XCTAssertNil(page)
+    }
 }
 
 private extension SQLiteStorageEngineTests {

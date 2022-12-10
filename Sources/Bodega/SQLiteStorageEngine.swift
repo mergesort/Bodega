@@ -290,38 +290,38 @@ public actor SQLiteStorageEngine: RemoteStorageEngine {
         }
     }
 
-  // MARK: RemoteStorageEngine
+    // MARK: RemoteStorageEngine
 
-  public struct PaginationOptions {
-    public let limit: Int?
+    public struct PaginationOptions {
+        public let limit: Int?
 
-    public init(limit: Int?) {
-      self.limit = limit
+        public init(limit: Int?) {
+            self.limit = limit
+        }
     }
-  }
 
-  public typealias PaginationCursor = Int
+    public typealias PaginationCursor = Int
 
-  public func readDataAndKeys(options: PaginationOptions) -> Paginator<Int, (key: CacheKey, data: Data)> {
-    Paginator { cursor in
-      var offset = cursor ?? 0
+    public func readDataAndKeys(options: PaginationOptions) -> Paginator<Int, (key: CacheKey, data: Data)> {
+        Paginator { cursor in
+            var offset = cursor ?? 0
 
-      let limit = options.limit ?? 50
-      let query = Self.storageTable.select(Self.expressions.keyRow, Self.expressions.dataRow)
-        .limit(limit, offset: offset)
+            let limit = options.limit ?? 50
+            let query = Self.storageTable.select(Self.expressions.keyRow, Self.expressions.dataRow)
+                .limit(limit, offset: offset)
 
-      do {
-          let result = try self.connection.prepare(query)
-              .map({ (key: CacheKey(verbatim: $0[Self.expressions.keyRow]), data: $0[Self.expressions.dataRow]) })
+            do {
+                let result = try self.connection.prepare(query)
+                    .map({ (key: CacheKey(verbatim: $0[Self.expressions.keyRow]), data: $0[Self.expressions.dataRow]) })
 
-        offset += result.count
-        let hasMoreItems = result.count == limit
-        return (hasMoreItems ? offset : nil, result)
-      } catch {
-          return (nil, [])
-      }
+                offset += result.count
+                let hasMoreItems = result.count == limit
+                return (hasMoreItems ? offset : nil, result)
+            } catch {
+                return (nil, [])
+            }
+        }
     }
-  }
 }
 
 private extension SQLiteStorageEngine {
