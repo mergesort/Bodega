@@ -1,6 +1,6 @@
 import Foundation
 
-public protocol RemoteStorageEngine: StorageEngine {
+public protocol PaginatedStorageEngine: StorageEngine {
     associatedtype PaginationOptions
     associatedtype PaginationCursor
 
@@ -18,8 +18,10 @@ public struct Paginator<Cursor, Item>: AsyncSequence {
     public func makeAsyncIterator() -> AsyncIterator {
         AsyncIterator(state: AsyncPaginatorState(fetch: fetch))
     }
+}
 
-    public struct AsyncIterator: AsyncIteratorProtocol {
+public extension Paginator {
+    struct AsyncIterator: AsyncIteratorProtocol {
         private let state: AsyncPaginatorState
 
         init(state: AsyncPaginatorState) {
@@ -27,27 +29,29 @@ public struct Paginator<Cursor, Item>: AsyncSequence {
         }
 
         public func next() async throws -> Element? {
-            try await state.next()
+            try await self.state.next()
         }
     }
+}
 
+extension Paginator {
     actor AsyncPaginatorState {
-        private var finished = false
+        private var isFinished = false
         private var cursor: Cursor?
         private var fetch: (Cursor?) async throws -> (Cursor?, Element)
 
         init(fetch: @escaping (Cursor?) async throws -> (Cursor?, Element)) {
             self.fetch = fetch
         }
-        
+
         func next() async throws -> Element? {
-            if finished {
+            if self.isFinished {
                 return nil
             }
 
             let (nextCursor, results) = try await fetch(cursor)
-            cursor = nextCursor
-            finished = nextCursor == nil
+            self.cursor = nextCursor
+            self.isFinished = nextCursor == nil
 
             return results
         }
