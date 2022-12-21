@@ -1,5 +1,5 @@
 import Foundation
-import SQLite
+@preconcurrency import SQLite
 
 /// A ``StorageEngine`` based on an SQLite database.
 ///
@@ -294,7 +294,7 @@ public actor SQLiteStorageEngine {
 
 extension SQLiteStorageEngine: PaginatedStorageEngine {
 
-    public struct PaginationOptions {
+    public struct PaginationOptions: Sendable {
         public let limit: Int
 
         public init(limit: Int) {

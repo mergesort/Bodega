@@ -24,6 +24,9 @@ let package = Package(
             name: "Bodega",
             dependencies: [
                 .productItem(name: "SQLite", package: "SQLite.swift", condition: nil)
+            ],
+            swiftSettings: [
+                .unsafeFlags(["-warn-concurrency", "-enable-actor-data-race-checks"]),
             ]),
         .testTarget(
             name: "BodegaTests",

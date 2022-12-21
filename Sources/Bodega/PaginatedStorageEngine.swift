@@ -7,11 +7,11 @@ public protocol PaginatedStorageEngine: StorageEngine {
     func readDataAndKeys(options: PaginationOptions) -> Paginator<PaginationCursor, (key: CacheKey, data: Data)>
 }
 
-public struct Paginator<Cursor, Item>: AsyncSequence {
+public struct Paginator<Cursor: Sendable, Item: Sendable>: AsyncSequence {
     public typealias Element = [Item]
-    private let fetch: (Cursor?) async throws -> (Cursor?, Element)
+    private let fetch: @Sendable (Cursor?) async throws -> (Cursor?, Element)
 
-    init(fetch: @escaping (Cursor?) async throws -> (Cursor?, Element)) {
+    init(fetch: @Sendable @escaping (Cursor?) async throws -> (Cursor?, Element)) {
         self.fetch = fetch
     }
 
@@ -38,9 +38,9 @@ extension Paginator {
     actor AsyncPaginatorState {
         private var isFinished = false
         private var cursor: Cursor?
-        private var fetch: (Cursor?) async throws -> (Cursor?, Element)
+        private var fetch: @Sendable (Cursor?) async throws -> (Cursor?, Element)
 
-        init(fetch: @escaping (Cursor?) async throws -> (Cursor?, Element)) {
+        init(fetch: @Sendable @escaping (Cursor?) async throws -> (Cursor?, Element)) {
             self.fetch = fetch
         }
 

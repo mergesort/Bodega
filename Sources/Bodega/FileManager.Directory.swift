@@ -4,7 +4,7 @@ public extension FileManager {
 
     /// A strongly typed directory allowing for easily specifying
     /// defaults like `documents`, `caches`, `temporary`, etc.
-    struct Directory {
+    struct Directory: Sendable {
         public let url: URL
 
         public init(url: URL) {

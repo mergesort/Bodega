@@ -4,7 +4,7 @@ import Foundation
 /// If initialized from a URL the ``CacheKey`` value will generate
 /// a consistent UUID-formatted MD5 version of the URL string as the key
 /// to ensure it is file system safe.
-public struct CacheKey: Codable, Equatable, Hashable {
+public struct CacheKey: Codable, Equatable, Hashable, Sendable {
 
     /// The `String` representation of your `CacheKey`.
     public let value: String
