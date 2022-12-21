@@ -323,6 +323,26 @@ extension SQLiteStorageEngine: PaginatedStorageEngine {
         }
     }
 
+    public func readData(options: PaginationOptions) -> Paginator<Int, Data> {
+        Paginator { cursor in
+            var offset = cursor ?? 0
+
+            let limit = options.limit
+            let query = Self.storageTable.select(Self.expressions.dataRow)
+                .limit(limit, offset: offset)
+
+            do {
+                let result = try self.connection.prepare(query)
+                    .map { $0[Self.expressions.dataRow] }
+
+                offset += result.count
+                let hasMoreItems = result.count == limit
+                return (hasMoreItems ? offset : nil, result)
+            } catch {
+                return (nil, [])
+            }
+        }
+    }
 }
 
 private extension SQLiteStorageEngine {
