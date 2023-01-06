@@ -62,7 +62,7 @@ try await storage.remove(key: Self.testCacheKey)
 ¹ The tradeoffs of `SQLiteStorageEngine` vs. `DiskStorageEngine` are discussed in the [StorageEngine documentation](https://mergesort.github.io/Bodega/documentation/bodega/using-storageengines), but `SQLiteStorageEngine` is the suggested default because of it's far superior performance, using the same simple API.
 
 Bodega provides two different instances of `StorageEngine` out of the box, but if you want to build your own all you have to do is conform to the `StorageEngine` protocol. This will allow you to create a `StorageEngine` for any data layer, whether you want to build a `CoreDataStorageEngine`, a `RealmStorageEngine`, a `KeychainStorageEngine`, or even a `StorageEngine` that maps to your API. If you can read, write, or delete data, you can conform to `StorageEngine`.
- 
+
 ```swift
 public protocol StorageEngine: Actor {
     func write(_ data: Data, key: CacheKey) async throws
@@ -175,7 +175,7 @@ If you prefer not to use SPM, you can integrate Bodega into your project manuall
 
 ### About me
 
-Hi, I'm [Joe](http://fabisevi.ch) everywhere on the web, but especially on [Twitter](https://twitter.com/mergesort).
+Hi, I'm [Joe](http://fabisevi.ch) everywhere on the web, but especially on [Mastodon](https://macaw.social/@mergesort).
 
 ### License
 
