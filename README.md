@@ -91,7 +91,7 @@ public protocol StorageEngine: Actor {
 
 ### ObjectStorage
 
-Bodega's most common usage is in [Boutique](https://github.com/mergesort/Boutique), but you can also use it as a standalone cache. Any `StorageEngine` can read or write `Data` from your peristence layer, but `ObjectStorage` provides the ability to work with Swift types, as long as they conform to `Codable`. `ObjectStorage` has a very similar API to `DiskStorage`, but with slightly different function names to be more explicit that you're working with objects and not `Data`.
+Bodega's most common usage is in [Boutique](https://github.com/mergesort/Boutique), but you can also use it as a standalone cache. Any `StorageEngine` can read or write `Data` from your persistence layer, but `ObjectStorage` provides the ability to work with Swift types, as long as they conform to `Codable`. `ObjectStorage` has a very similar API to `DiskStorage`, but with slightly different function names to be more explicit that you're working with objects and not `Data`.
 
 ```swift
 // Initialize an ObjectStorage object
@@ -128,7 +128,7 @@ try await storage.removeObject(forKey: cacheKey)
 
 ### Further Exploration
 
-Bodega is very useful as a primitive for interacting with and peristing data, but it's even more powerful when integrated into [Boutique](https://github.com/mergesort/Boutique). Boutique is a `Store` and serves as the foundation of a Model View Controller Store architecture I've developed. MVCS brings together the familiarity and simplicity of the [MVC architecture](https://developer.apple.com/library/archive/documentation/General/Conceptual/DevPedia-CocoaCore/MVC.html) you know and love with the power of a `Store`, to give your app a simple but well-defined state management and data architecture.
+Bodega is very useful as a primitive for interacting with and persisting data, but it's even more powerful when integrated into [Boutique](https://github.com/mergesort/Boutique). Boutique is a `Store` and serves as the foundation of a Model View Controller Store architecture I've developed. MVCS brings together the familiarity and simplicity of the [MVC architecture](https://developer.apple.com/library/archive/documentation/General/Conceptual/DevPedia-CocoaCore/MVC.html) you know and love with the power of a `Store`, to give your app a simple but well-defined state management and data architecture.
 
 If you'd like to learn more about how it works you can read about the philosophy in a [blog post](https://build.ms/2022/06/22/model-view-controller-store) where I explore MVCS for SwiftUI, and you can find a reference implementation of an offline-ready realtime updating MVCS app powered by Boutique in this [repo](https://github.com/mergesort/MVCS).
 
