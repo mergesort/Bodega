@@ -3,12 +3,23 @@ import XCTest
 
 final class SQLiteStorageEngineTests: XCTestCase {
 
-    private var storage: SQLiteStorageEngine!
+    private static var _storage: SQLiteStorageEngine!
+    private var storage: SQLiteStorageEngine {
+        get { Self._storage }
+        set { Self._storage = newValue }
+    }
 
     override func setUp() async throws {
-        storage = SQLiteStorageEngine(directory: .temporary(appendingPath: "Tests"))
-
         try await storage.removeAllData()
+    }
+    class override func setUp() {
+        _storage = SQLiteStorageEngine(directory: .temporary(appendingPath: "Tests"))
+    }
+
+    class override func tearDown() {
+        Task {
+            try await _storage.deleteSQLiteFile()
+        }
     }
 
     func testWritingDataSucceeds() async throws {
@@ -235,12 +246,14 @@ final class SQLiteStorageEngineTests: XCTestCase {
         // Make sure the createdAt is in the right range if it has been stored
         try await storage.write(Self.testData, key: Self.testCacheKey)
         let firstWriteDate = await storage.createdAt(key: Self.testCacheKey)
+        XCTAssertNotNil(firstWriteDate)
 
         try await Task.sleep(nanoseconds: 1_000_000)
 
         // Make sure the createdAt date is not updated when the data is re-written
         try await storage.write(Self.testData, key: Self.testCacheKey)
         let secondWriteDate = await storage.createdAt(key: Self.testCacheKey)
+        XCTAssertNotNil(secondWriteDate)
 
         XCTAssertEqual(firstWriteDate, secondWriteDate)
     }
@@ -253,12 +266,14 @@ final class SQLiteStorageEngineTests: XCTestCase {
         // Make sure the updatedAt is in the right range if it has been stored
         try await storage.write(Self.testData, key: Self.testCacheKey)
         let firstWriteDate = await storage.updatedAt(key: Self.testCacheKey)
+        XCTAssertNotNil(firstWriteDate)
 
         try await Task.sleep(nanoseconds: 1_000_000)
 
         // Make sure the updatedAt date is updated when the data is re-written
         try await storage.write(Self.testData, key: Self.testCacheKey)
         let secondWriteDate = await storage.updatedAt(key: Self.testCacheKey)
+        XCTAssertNotNil(secondWriteDate)
 
         XCTAssertNotEqual(firstWriteDate, secondWriteDate)
     }

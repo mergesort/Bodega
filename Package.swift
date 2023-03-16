@@ -16,15 +16,10 @@ let package = Package(
         ),
     ],
     dependencies: [
-        .package(url: "https://github.com/stephencelis/SQLite.swift.git", from: Version(0, 13, 2)),
         .package(url: "https://github.com/apple/swift-docc-plugin", from: "1.0.0"),
     ],
     targets: [
-        .target(
-            name: "Bodega",
-            dependencies: [
-                .productItem(name: "SQLite", package: "SQLite.swift", condition: nil)
-            ]),
+        .target(name: "Bodega"),
         .testTarget(
             name: "BodegaTests",
             dependencies: ["Bodega"]),

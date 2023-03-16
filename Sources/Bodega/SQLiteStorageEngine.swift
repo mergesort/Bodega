@@ -1,5 +1,5 @@
 import Foundation
-import SQLite
+import SQLite3
 
 /// A ``StorageEngine`` based on an SQLite database.
 ///
@@ -29,97 +29,78 @@ import SQLite
 /// One alternative is to make the initializer `throw`, and that's a perfectly reasonable tradeoff.
 /// While that is doable, I believe it's very unlikely the caller will have specific remedies for
 /// specific SQLite errors, so for simplicity I've made the initializer return an optional ``SQLiteStorageEngine``.
-public actor SQLiteStorageEngine: StorageEngine {
+public actor SQLiteStorageEngine {
+    private let tableName: String
+    private let sqliteFileURL: URL
 
-    private let connection: Connection
+    private var dbPointer: OpaquePointer?
 
-    /// A directory on the filesystem where your ``StorageEngine``s data will be stored.
-    private let directory: FileManager.Directory
-
-    /// Initializes a new ``SQLiteStorageEngine`` for persisting `Data` to disk.
-    ///
-    /// - Parameter directory: A directory on the filesystem where your files will be written to.
-    /// `FileManager.Directory` is a type-safe wrapper around URL that provides sensible defaults like
-    ///  `.documents(appendingPath:)`, `.caches(appendingPath:)`, and more.
-    public init?(directory: FileManager.Directory, databaseFilename filename: String = "data") {
-        self.directory = directory
+    /// Initialize a new instance of the ``SQLiteStorageEngine`` for persisting `Data` to disk.
+    /// - Parameters:
+    ///   - directory: The director that will contain the sqlite3 file. `FileManager.Directory` is a type safe wrapper around URL that provides sensible defaults like `.documents(appendingPath:)`, `.caches(appendingPath:)` and more.
+    ///   - filename: The `String` filename to use for the database, this will also be used as the table name in the database.
+    ///   - fileProtection: The `URLFileProtection` used when creating sqlite3 file. **NOTE** Using .complete or .completeUnlessOpen
+    ///   will cause the database to not be able to be read or written to while the app is in the background.
+    init?(
+        directory: FileManager.Directory,
+        databaseFilename filename: String = "data",
+        fileProtection: URLFileProtection = .completeUntilFirstUserAuthentication
+    ) {
+        tableName = filename
 
         do {
-            if !Self.directoryExists(atURL: directory.url) {
-                try Self.createDirectory(url: directory.url)
+            sqliteFileURL = try Self.createSQLiteFile(in: directory, withFilename: filename, attributes: [.protectionKey: fileProtection])
+
+            // Open connection to database
+            guard sqlite3_open(sqliteFileURL.relativePath, &dbPointer) == SQLITE_OK else {
+                throw SQLite.SQLiteDatabaseError.unableToOpenDatabaseConnection
             }
 
-            self.connection = try Connection(directory.url.appendingPathComponent(filename).appendingPathExtension("sqlite3").absoluteString)
-            self.connection.busyTimeout = 3
-
-            try self.connection.run(Self.storageTable.create(ifNotExists: true) { table in
-                table.column(Self.expressions.keyRow, primaryKey: true)
-                table.column(Self.expressions.dataRow)
-                table.column(Self.expressions.createdAtRow, defaultValue: Date())
-                table.column(Self.expressions.updatedAtRow, defaultValue: Date())
-            })
+            // Create the table, if needed.
+            try SQLite.createTableNamed(tableName, inDatabase: dbPointer)
         } catch {
             return nil
         }
     }
 
+    deinit {
+        sqlite3_close(dbPointer)
+    }
+}
+
+// MARK: - StorageEngine
+
+extension SQLiteStorageEngine: StorageEngine {
     /// Writes `Data` to the database with an associated ``CacheKey``.
     /// - Parameters:
     ///   - data: The `Data` being stored to disk.
     ///   - key: A ``CacheKey`` for matching `Data`.
-    public func write(_ data: Data, key: CacheKey) throws {
-        let values = [
-            Self.expressions.keyRow <- key.rawValue,
-            Self.expressions.dataRow <- data,
-            Self.expressions.updatedAtRow <- Date()
-        ]
-
-        if self.keyExists(key) {
-            try self.connection.run(
-                Self.storageTable
-                    .filter(Self.expressions.keyRow == key.rawValue)
-                    .update(values)
-            )
-        } else {
-            try self.connection.run(
-                Self.storageTable.insert(values)
-            )
-        }
+    public func write(_ data: Data, key: CacheKey) async throws {
+        try await write([(key, data)])
     }
 
     /// Writes an array of `Data` items to the database with their associated ``CacheKey`` from the tuple.
     /// - Parameters:
     ///   - dataAndKeys: An array of the `[(CacheKey, Data)]` to store
     ///   multiple `Data` items with their associated keys at once.
-    public func write(_ dataAndKeys: [(key: CacheKey, data: Data)]) throws {
-        guard !dataAndKeys.isEmpty else { return }
-        
-        let values = dataAndKeys.map({[
-            Self.expressions.keyRow <- $0.key.rawValue,
-            Self.expressions.dataRow <- $0.data,
-            Self.expressions.updatedAtRow <- Date()
-        ]})
-
-        try self.connection.run(
-            Self.storageTable.insertMany(or: .replace, values)
-        )
+    public func write(_ dataAndKeys: [(key: CacheKey, data: Data)]) async throws {
+        guard dataAndKeys.isEmpty == false else { return }
+        return try await withCheckedThrowingContinuation { continuation in
+            do {
+                try SQLite.writeDataAndKeys(dataAndKeys, toTableNamed: tableName, inDatabase: dbPointer)
+                continuation.resume()
+            } catch {
+                continuation.resume(throwing: error)
+            }
+        }
     }
 
     /// Reads `Data` from disk based on the associated ``CacheKey``.
     /// - Parameters:
     ///   - key: A ``CacheKey`` for matching `Data`.
     /// - Returns: The `Data` stored if it exists, nil if there is no `Data` stored for the `CacheKey`.
-    public func read(key: CacheKey) -> Data? {
-        do {
-            let query = Self.storageTable
-                .select(Self.expressions.keyRow, Self.expressions.dataRow)
-                .filter(Self.expressions.keyRow == key.rawValue)
-                .limit(1)
-
-            return try self.connection.pluck(query)?[Self.expressions.dataRow]
-        } catch {
-            return nil
-        }
+    public func read(key: CacheKey) async -> Data? {
+        await readDataAndKeys(keys: [key]).first?.data
     }
 
     /// Reads `Data` items based on the associated array of ``CacheKey``s provided as a parameter.
@@ -127,17 +108,8 @@ public actor SQLiteStorageEngine: StorageEngine {
     ///   - keys: A `[CacheKey]` for matching multiple `Data` items.
     /// - Returns: An array of `[Data]` stored on disk if the `CacheKey`s exist,
     /// and an `[]` if there is no `Data` matching the `keys` passed in.
-    public func read(keys: [CacheKey]) -> [Data] {
-        do {
-            let query = Self.storageTable.select(Self.expressions.dataRow)
-                .where(keys.map(\.rawValue).contains(Self.expressions.keyRow))
-                .limit(keys.count)
-
-            return try self.connection.prepare(query)
-                .map({ $0[Self.expressions.dataRow] })
-        } catch {
-            return []
-        }
+    public func read(keys: [CacheKey]) async -> [Data] {
+        await readDataAndKeys(keys: keys).map(\.data)
     }
 
     /// Reads `Data` from disk based on the associated ``CacheKey``.
@@ -154,105 +126,83 @@ public actor SQLiteStorageEngine: StorageEngine {
     ///   - keys: A `[CacheKey]` for matching multiple `Data` items.
     /// - Returns: An array of `[(CacheKey, Data)]` if the `CacheKey`s exist,
     /// and an empty array if there are no `Data` items matching the `keys` passed in.
-    public func readDataAndKeys(keys: [CacheKey]) -> [(key: CacheKey, data: Data)] {
-        let query = Self.storageTable.select(Self.expressions.keyRow, Self.expressions.dataRow)
-            .where(keys.map(\.rawValue).contains(Self.expressions.keyRow))
-            .limit(keys.count)
-
-        do {
-            return try self.connection.prepare(query)
-                .map({ (key: CacheKey(verbatim: $0[Self.expressions.keyRow]), data: $0[Self.expressions.dataRow]) })
-        } catch {
-            return []
+    public func readDataAndKeys(keys: [CacheKey]) async -> [(key: CacheKey, data: Data)] {
+        return await withCheckedContinuation { continuation in
+            let results = SQLite.selectKeys(keys, inTable: tableName, inDatabase: dbPointer)
+            continuation.resume(returning: results)
         }
-    }
-
-    /// Reads all the `[Data]` located in the database.
-    /// - Returns: An array of the `[Data]` contained in the database.
-    public func readAllData() -> [Data] {
-        let allKeys = self.allKeys()
-        return self.read(keys: allKeys)
-    }
-
-    /// Reads all the `Data` located in the database and returns an array
-    /// of `[(CacheKey, Data)]` tuples associated with the ``CacheKey``.
-    ///
-    /// This method returns the ``CacheKey`` and `Data` together in an array of `[(CacheKey, Data)]`
-    /// allowing you to know which ``CacheKey`` led to a specific `Data` item being retrieved.
-    /// This can be useful in allowing manual iteration over `Data` items, but if you don't need
-    /// to know which ``CacheKey`` led to a piece of `Data` being retrieved
-    /// you can use ``readAllData()`` instead.
-    /// - Returns: An array of the `[Data]` and it's associated ``CacheKey``s.
-    public func readAllDataAndKeys() -> [(key: CacheKey, data: Data)] {
-        let allKeys = self.allKeys()
-        return self.readDataAndKeys(keys: allKeys)
     }
 
     /// Removes `Data` from disk based on the associated ``CacheKey``.
     /// - Parameters:
     ///   - key: A ``CacheKey`` for finding the `Data` to remove.
-    public func remove(key: CacheKey) throws {
-        let deleteQuery = Self.storageTable.filter(Self.expressions.keyRow == key.rawValue)
-        try self.connection.run(deleteQuery.delete())
+    public func remove(key: CacheKey) async throws {
+        return try await withCheckedThrowingContinuation { continuation in
+            do {
+                try SQLite.deleteKeys([key], fromTable: tableName, inDatabase: dbPointer)
+                continuation.resume()
+            } catch {
+                continuation.resume(throwing: error)
+            }
+        }
     }
 
     /// Removes `Data` items from the database based on the associated array of ``CacheKey``s provided as a parameter.
     /// - Parameters:
     ///   - keys: A `[CacheKey]` for matching multiple `Data` items to remove.
-    public func remove(keys: [CacheKey]) throws {
-        guard !keys.isEmpty else { return }
-
-        let deleteQuery = Self.storageTable.select(Self.expressions.keyRow, Self.expressions.dataRow)
-            .where(keys.map(\.rawValue).contains(Self.expressions.keyRow))
-            .limit(keys.count)
-
-        try self.connection.run(deleteQuery.delete())
+    public func remove(keys: [CacheKey]) async throws {
+        guard keys.isEmpty == false else { return }
+        return try await withCheckedThrowingContinuation { continuation in
+            do {
+                try SQLite.deleteKeys(keys, fromTable: tableName, inDatabase: dbPointer)
+                continuation.resume()
+            } catch {
+                continuation.resume(throwing: error)
+            }
+        }
     }
 
     /// Removes all the `Data` items from the database.
-    public func removeAllData() throws {
-        try self.connection.run(Self.storageTable.delete())
+    public func removeAllData() async throws {
+        return try await withCheckedThrowingContinuation { continuation in
+            do {
+                try SQLite.emptyTableNamed(tableName, inDatabase: dbPointer)
+                continuation.resume()
+            } catch {
+                continuation.resume(throwing: error)
+            }
+        }
     }
 
     /// Checks whether a value with a key is persisted.
     /// - Parameter key: The key to for existence.
     /// - Returns: If the key exists the function returns true, false if it does not.
-    public func keyExists(_ key: CacheKey) -> Bool {
-        do {
-            let query = Self.storageTable
-                .select(Self.expressions.keyRow)
-                .filter(Self.expressions.keyRow == key.rawValue)
-                .limit(1)
-
-            return try self.connection.pluck(query)?[Self.expressions.keyRow] != nil
-        } catch {
-            return false
+    public func keyExists(_ key: CacheKey) async -> Bool {
+        return await withCheckedContinuation { continuation in
+            do {
+                try SQLite.keyExists(key, inTable: tableName, inDatabase: dbPointer)
+                continuation.resume(returning: true)
+            } catch {
+                continuation.resume(returning: false)
+            }
         }
     }
 
     /// Iterates through the database to find the total number of `Data` items.
     /// - Returns: The file/key count.
-    public func keyCount() -> Int {
-        do {
-            return try self.connection.scalar(
-                Self.storageTable.select(
-                    Self.expressions.keyRow.distinct.count
-                )
-            )
-        } catch {
-            return 0
+    public func keyCount() async -> Int {
+        return await withCheckedContinuation { continuation in
+            let queryResult = SQLite.keyCount(inTable: tableName, inDatabase: dbPointer)
+            continuation.resume(returning: queryResult)
         }
     }
 
     /// Iterates through the database to find all of the keys.
     /// - Returns: An array of the keys contained in a directory.
-    public func allKeys() -> [CacheKey] {
-        let query = Self.storageTable.select(Self.expressions.keyRow)
-        do {
-            return try self.connection.prepare(query)
-                .map({ CacheKey(verbatim: $0[Self.expressions.keyRow]) })
-        } catch {
-            return []
+    public func allKeys() async -> [CacheKey] {
+        return await withCheckedContinuation { continuation in
+            let queryResult = SQLite.selectAllKeys(inTable: tableName, inDatabase: dbPointer)
+            continuation.resume(returning: queryResult)
         }
     }
 
@@ -260,16 +210,10 @@ public actor SQLiteStorageEngine: StorageEngine {
     /// - Parameters:
     ///   - key: A ``CacheKey`` for matching `Data`.
     /// - Returns: The creation date of the `Data` on disk if it exists, nil if there is no `Data` stored for the ``CacheKey``.
-    public func createdAt(key: CacheKey) -> Date? {
-        do {
-            let query = Self.storageTable
-                .select(Self.expressions.createdAtRow)
-                .filter(Self.expressions.keyRow == key.rawValue)
-                .limit(1)
-
-            return try self.connection.pluck(query)?[Self.expressions.createdAtRow]
-        } catch {
-            return nil
+    public func createdAt(key: CacheKey) async -> Date? {
+        return await withCheckedContinuation { continuation in
+            let result = SQLite.selectDateColumn(.createdAt, matchingKeys: [key], inTable: tableName, inDatabase: dbPointer).first
+            continuation.resume(returning: result)
         }
     }
 
@@ -277,70 +221,37 @@ public actor SQLiteStorageEngine: StorageEngine {
     /// - Parameters:
     ///   - key: A ``CacheKey`` for matching `Data`.
     /// - Returns: The modification date of the `Data` on disk if it exists, nil if there is no `Data` stored for the ``CacheKey``.
-    public func updatedAt(key: CacheKey) -> Date? {
-        do {
-            let query = Self.storageTable
-                .select(Self.expressions.updatedAtRow)
-                .filter(Self.expressions.keyRow == key.rawValue)
-                .limit(1)
-
-            return try self.connection.pluck(query)?[Self.expressions.updatedAtRow]
-        } catch {
-            return nil
+    public func updatedAt(key: CacheKey) async -> Date? {
+        return await withCheckedContinuation { continuation in
+            let result = SQLite.selectDateColumn(.updatedAt, matchingKeys: [key], inTable: tableName, inDatabase: dbPointer).first
+            continuation.resume(returning: result)
         }
     }
-
 }
 
 private extension SQLiteStorageEngine {
-    static let storageTable = Table("data")
+    static func createSQLiteFile(in directory: FileManager.Directory, withFilename filename: String, attributes: [FileAttributeKey: Any]) throws -> URL {
+        let fileURL = directory.url
+            .appendingPathComponent(filename)
+            .appendingPathExtension("sqlite3")
+
+        guard FileManager.default.fileExists(atPath: fileURL.relativePath) == false else {
+            return fileURL
+        }
+        try FileManager.default.createDirectory(at: directory.url, withIntermediateDirectories: true)
+        FileManager.default.createFile(atPath: fileURL.relativePath, contents: nil, attributes: attributes)
+        return fileURL
+    }
 }
 
-private extension SQLiteStorageEngine {
-
-    struct Expressions {}
-
-    static var expressions: Expressions {
-        Expressions()
+extension SQLiteStorageEngine {
+    // The destroy method isn't exposed outside of the module, as it's only used by the unit tests to clean up the database file.
+    func deleteSQLiteFile() throws {
+        sqlite3_close(dbPointer)
+        guard FileManager.default.fileExists(atPath: sqliteFileURL.relativePath) else {
+            // No file exists, fail silently
+            return
+        }
+        try FileManager.default.removeItem(atPath: sqliteFileURL.relativePath)
     }
-
-}
-
-private extension SQLiteStorageEngine.Expressions {
-
-    var keyRow: Expression<String> {
-        Expression<String>("key")
-    }
-
-    var dataRow: Expression<Data> {
-        Expression<Data>("value")
-    }
-
-    var createdAtRow: Expression<Date> {
-        Expression<Date>("createdAt")
-    }
-
-    var updatedAtRow: Expression<Date> {
-        Expression<Date>("updatedAt")
-    }
-
-}
-
-private extension SQLiteStorageEngine {
-
-    static func directoryExists(atURL url: URL) -> Bool {
-        var isDirectory: ObjCBool = true
-
-        return FileManager.default.fileExists(atPath: url.path, isDirectory: &isDirectory)
-    }
-
-    static func createDirectory(url: URL) throws {
-        try FileManager.default
-            .createDirectory(
-                at: url,
-                withIntermediateDirectories: true,
-                attributes: nil
-            )
-    }
-
 }
