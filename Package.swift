@@ -24,9 +24,12 @@ let package = Package(
             name: "Bodega",
             dependencies: [
                 .productItem(name: "SQLite", package: "SQLite.swift", condition: nil)
-            ]),
+            ],
+            swiftSettings: [.unsafeFlags(["-strict-concurrency=complete"])] // Values are minimal, targeted, complete
+        ),
         .testTarget(
             name: "BodegaTests",
-            dependencies: ["Bodega"]),
+            dependencies: ["Bodega"]
+        ),
     ]
 )
