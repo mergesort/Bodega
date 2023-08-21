@@ -2,7 +2,6 @@ import XCTest
 @testable import Bodega
 
 final class SQLiteStorageEngineTests: XCTestCase {
-
     private var storage: SQLiteStorageEngine!
 
     override func setUp() async throws {
@@ -266,24 +265,24 @@ final class SQLiteStorageEngineTests: XCTestCase {
     func testPagination() async throws {
         try await self.writeItemsToDatabase(count: 101)
 
-        let paginator = await storage.readDataAndKeys(options: .init(limit: 50)).makeAsyncIterator()
+        let paginator = await storage.readDataAndKeys(options: .init(limit: 50))
+        let paginationIterator = paginator.makeAsyncIterator()
 
-        var page = try await paginator.next()
+        var page = try await paginationIterator.next()
         XCTAssertEqual(page?.count, 50)
 
-        page = try await paginator.next()
+        page = try await paginationIterator.next()
         XCTAssertEqual(page?.count, 50)
 
-        page = try await paginator.next()
+        page = try await paginationIterator.next()
         XCTAssertEqual(page?.count, 1)
 
-        page = try await paginator.next()
+        page = try await paginationIterator.next()
         XCTAssertNil(page)
     }
 }
 
 private extension SQLiteStorageEngineTests {
-
     static let testData = Data("Test".utf8)
     static let testCacheKey = CacheKey(verbatim: "test-key")
 
@@ -300,5 +299,4 @@ private extension SQLiteStorageEngineTests {
             try await storage.write("Value \(i)".data(using: .utf8)!, key: CacheKey(verbatim: "\(i)"))
         }
     }
-
 }

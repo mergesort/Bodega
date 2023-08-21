@@ -25,11 +25,11 @@ let package = Package(
             dependencies: [
                 .productItem(name: "SQLite", package: "SQLite.swift", condition: nil)
             ],
-            swiftSettings: [
-                .unsafeFlags(["-warn-concurrency", "-enable-actor-data-race-checks"]),
-            ]),
+            swiftSettings: [.unsafeFlags(["-strict-concurrency=complete"])] // Values are minimal, targeted, complete
+        ),
         .testTarget(
             name: "BodegaTests",
-            dependencies: ["Bodega"]),
+            dependencies: ["Bodega"]
+        ),
     ]
 )

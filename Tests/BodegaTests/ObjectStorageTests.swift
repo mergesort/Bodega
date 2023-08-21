@@ -3,7 +3,6 @@ import XCTest
 
 // Testing an ObjectStorage instance that's backed by a SQLiteStorageEngine
 final class SQLiteStorageEngineBackedObjectStorageTests: ObjectStorageTests {
-
     override func setUp() async throws {
         storage = ObjectStorage(
             storage: SQLiteStorageEngine(directory: .temporary(appendingPath: "SQLiteTests"))!
@@ -32,12 +31,10 @@ final class SQLiteStorageEngineBackedObjectStorageTests: ObjectStorageTests {
 
         XCTAssertEqual(firstWriteDate, secondWriteDate)
     }
-
 }
 
 // Testing an ObjectStorage instance that's backed by a DiskStorageEngine
 final class DiskStorageEngineBackedObjectStorageTests: ObjectStorageTests {
-
     override func setUp() async throws {
         storage = ObjectStorage(
             storage: DiskStorageEngine(directory: .temporary(appendingPath: "DiskStorageTests"))
@@ -67,11 +64,9 @@ final class DiskStorageEngineBackedObjectStorageTests: ObjectStorageTests {
         // a new `createdAt` will be generated on write.
         XCTAssertNotEqual(firstWriteDate, secondWriteDate)
     }
-
 }
 
 class ObjectStorageTests: XCTestCase {
-
     fileprivate var storage: ObjectStorage<CodableObject>!
 
     // You should run SQLiteStorageEngineBackedObjectStorageTests and DiskStorageEngineBackedObjectStorageTests
@@ -302,7 +297,6 @@ class ObjectStorageTests: XCTestCase {
 
         XCTAssertNotEqual(firstWriteDate, secondWriteDate)
     }
-
 }
 
 private struct CodableObject: Codable, Equatable {
@@ -310,7 +304,6 @@ private struct CodableObject: Codable, Equatable {
 }
 
 private extension ObjectStorageTests {
-
     static let testObject = CodableObject(value: "default-value")
     static let testCacheKey = CacheKey("test-key")
 
@@ -326,5 +319,4 @@ private extension ObjectStorageTests {
             try await storage.store(CodableObject(value: "Value \(i)"), forKey: CacheKey(verbatim: "\(i)"))
         }
     }
-
 }

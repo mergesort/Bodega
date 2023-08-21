@@ -2,7 +2,6 @@ import XCTest
 @testable import Bodega
 
 final class StringFormattingTests: XCTestCase {
-
     func testCacheKeyURLHashing() {
         let redPandaClubHash = "37E97C2D-25C0-19AE-755D-FC39211AEE32"
         let url = URL(string: "https://www.redpanda.club")!
@@ -28,5 +27,4 @@ final class StringFormattingTests: XCTestCase {
         XCTAssertEqual(preformattedUUIDString, "37E97C2D-25C0-19AE-755D-FC39211AEE32")
         XCTAssertNotEqual(preformattedUUIDString, "37E97C2D25C019AE755DFC39211AEE32")
     }
-
 }

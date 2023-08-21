@@ -29,8 +29,7 @@ import Foundation
 /// One alternative is to make the initializer `throw`, and that's a perfectly reasonable tradeoff.
 /// While that is doable, I believe it's very unlikely the caller will have specific remedies for
 /// specific SQLite errors, so for simplicity I've made the initializer return an optional ``SQLiteStorageEngine``.
-public actor SQLiteStorageEngine {
-
+public actor SQLiteStorageEngine: PaginatedStorageEngine {
     private let connection: Connection
 
     /// A directory on the filesystem where your ``StorageEngine``s data will be stored.
@@ -140,16 +139,11 @@ public actor SQLiteStorageEngine {
         }
     }
 
-    /// Reads `Data` from disk based on the associated ``CacheKey``.
-    /// - Parameters:
-    ///   - key: A ``CacheKey`` for matching `Data`.
-    /// - Returns: The `Data` stored if it exists, nil if there is no `Data` stored for the `CacheKey`.
-
     /// This method returns the ``CacheKey`` and `Data` together in a tuple of `[(CacheKey, Data)]`
     /// allowing you to know which ``CacheKey`` led to a specific `Data` item being retrieved.
-    /// This can be useful in allowing manual iteration over data, but if you don't need
+    /// This can be useful when manual iteration over data is needed, but if you don't need
     /// to know which ``CacheKey`` that led to a piece of `Data` being retrieved
-    ///  you can use ``read(keys:)`` instead.
+    /// you can use ``read(keys:)`` instead.
     /// - Parameters:
     ///   - keys: A `[CacheKey]` for matching multiple `Data` items.
     /// - Returns: An array of `[(CacheKey, Data)]` if the `CacheKey`s exist,
@@ -290,39 +284,11 @@ public actor SQLiteStorageEngine {
         }
     }
 
-}
+    // MARK: PaginatedStorageEngine
 
-extension SQLiteStorageEngine: PaginatedStorageEngine {
-
-    public struct PaginationOptions: Sendable {
-        public let limit: Int
-
-        public init(limit: Int) {
-            self.limit = limit
-        }
-    }
-
-    public func readDataAndKeys(options: PaginationOptions) -> Paginator<Int, (key: CacheKey, data: Data)> {
-        Paginator { cursor in
-            var offset = cursor ?? 0
-
-            let limit = options.limit
-            let query = Self.storageTable.select(Self.expressions.keyRow, Self.expressions.dataRow)
-                .limit(limit, offset: offset)
-
-            do {
-                let result = try self.connection.prepare(query)
-                    .map({ (key: CacheKey(verbatim: $0[Self.expressions.keyRow]), data: $0[Self.expressions.dataRow]) })
-
-                offset += result.count
-                let hasMoreItems = result.count == limit
-                return (hasMoreItems ? offset : nil, result)
-            } catch {
-                return (nil, [])
-            }
-        }
-    }
-
+    /// Reads a page of `Data` items based on the specified ``PaginationOptions``.
+    /// - Parameter options: The ``PaginationOptions`` used to read data.
+    /// - Returns: A ``Paginator`` representing access to the next page of `Data`.
     public func readData(options: PaginationOptions) -> Paginator<Int, Data> {
         Paginator { cursor in
             var offset = cursor ?? 0
@@ -343,6 +309,35 @@ extension SQLiteStorageEngine: PaginatedStorageEngine {
             }
         }
     }
+
+    /// This method returns a `Paginator` of ``CacheKey`` and `Data` together in a tuple
+    /// based on the specified ``PaginationOptions``. By returning both we allow you to know
+    /// which ``CacheKey`` is bound to a specific `Data` item being retrieved.
+    /// This can be useful when manual iteration over data is needed, but if you don't need
+    /// to know which ``CacheKey`` that led to a piece of `Data` being retrieved
+    /// you can use ``read(keys:)`` instead.
+    /// - Parameter options: The ``PaginationOptions`` used to read data.
+    /// - Returns: A ``Paginator`` representing access to the next page of ``CacheKey`` and `Data`.
+    public func readDataAndKeys(options: PaginationOptions) -> Paginator<Int, (key: CacheKey, data: Data)> {
+        Paginator { cursor in
+            var offset = cursor ?? 0
+
+            let limit = options.limit
+            let query = Self.storageTable.select(Self.expressions.keyRow, Self.expressions.dataRow)
+                .limit(limit, offset: offset)
+
+            do {
+                let result = try self.connection.prepare(query)
+                    .map({ (key: CacheKey(verbatim: $0[Self.expressions.keyRow]), data: $0[Self.expressions.dataRow]) })
+
+                offset += result.count
+                let hasMoreItems = result.count == limit
+                return (hasMoreItems ? offset : nil, result)
+            } catch {
+                return (nil, [])
+            }
+        }
+    }
 }
 
 private extension SQLiteStorageEngine {
@@ -350,17 +345,14 @@ private extension SQLiteStorageEngine {
 }
 
 private extension SQLiteStorageEngine {
-
     struct Expressions {}
 
     static var expressions: Expressions {
         Expressions()
     }
-
 }
 
 private extension SQLiteStorageEngine.Expressions {
-
     var keyRow: Expression<String> {
         Expression<String>("key")
     }
@@ -376,11 +368,18 @@ private extension SQLiteStorageEngine.Expressions {
     var updatedAtRow: Expression<Date> {
         Expression<Date>("updatedAt")
     }
-
 }
 
-private extension SQLiteStorageEngine {
+public extension SQLiteStorageEngine {
+    struct PaginationOptions: Sendable {
+        public let limit: Int
 
+        public init(limit: Int) {
+            self.limit = limit
+        }
+    }
+}
+private extension SQLiteStorageEngine {
     static func directoryExists(atURL url: URL) -> Bool {
         var isDirectory: ObjCBool = true
 
@@ -395,5 +394,4 @@ private extension SQLiteStorageEngine {
                 attributes: nil
             )
     }
-
 }

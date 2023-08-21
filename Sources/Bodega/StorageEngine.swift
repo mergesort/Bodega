@@ -40,7 +40,6 @@ public protocol StorageEngine: Actor {
 // Some `StorageEngine`s such as ``SQLiteStorageEngine`` may want to implement the one-item
 // and array-based functions separately for optimization purposes, but these are safe defaults.
 extension StorageEngine {
-
     /// Reads `Data` items based on the associated array of ``CacheKey``s provided as a parameter.
     /// - Parameters:
     ///   - keys: A `[CacheKey]` for matching multiple `Data` items.
@@ -87,5 +86,4 @@ extension StorageEngine {
         let allKeys = await self.allKeys()
         return await self.readDataAndKeys(keys: allKeys)
     }
-
 }

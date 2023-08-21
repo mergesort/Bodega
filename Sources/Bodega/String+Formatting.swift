@@ -2,7 +2,6 @@ import CryptoKit
 import Foundation
 
 extension String {
-
     var md5: String {
         Data(self.utf8).md5.hexString
     }
@@ -20,11 +19,9 @@ extension String {
 
         return string
     }
-
 }
 
 extension Data {
-
     var md5: Data {
         Data(Insecure.MD5.hash(data: self))
     }
@@ -32,6 +29,5 @@ extension Data {
     var hexString: String {
         map { String(format: "%02x", $0) }.joined()
     }
-
 }
 

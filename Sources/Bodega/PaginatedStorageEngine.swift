@@ -1,8 +1,8 @@
 import Foundation
 
-/// A ``PaginatedStorageEngine`` represents a special type of ``StorageEngine`` capable of fetching pages of data on demand.
+/// The ``PaginatedStorageEngine`` represents additional capabilities for a ``StorageEngine``, one that can fetch pages of data on demand.
 ///
-/// Use a ``PaginatedStorageEngine`` when the amount of stored data is large, and fetching all data upfront is a performance issue.
+/// Use a ``PaginatedStorageEngine`` when the amount of stored data is large, and fetching all data upfront can cause performance issues.
 ///
 /// Refer to ``SQLiteStorageEngine`` for inspiration on how to implement paginated methods.
 public protocol PaginatedStorageEngine: StorageEngine {
@@ -13,7 +13,7 @@ public protocol PaginatedStorageEngine: StorageEngine {
     func readData(options: PaginationOptions) -> Paginator<PaginationCursor, Data>
 }
 
-/// A ``Paginator`` is an ``AsyncSequence`` that can iterate over the pages fetched from ``PaginatedStorageEngine``.
+/// ``Paginator`` is an ``AsyncSequence`` that can iterate over the pages fetched from ``PaginatedStorageEngine``.
 public struct Paginator<Cursor: Sendable, Item: Sendable>: AsyncSequence {
     public typealias Element = [Item]
     private let next: @Sendable (Cursor?) async throws -> (Cursor?, Element)
