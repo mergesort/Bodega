@@ -5,7 +5,6 @@ import Foundation
 /// a consistent UUID-formatted MD5 version of the URL string as the key
 /// to ensure it is file system safe.
 public struct CacheKey: Codable, Equatable, Hashable, Sendable {
-
     /// The `String` representation of your `CacheKey`.
     public let value: String
 
@@ -44,11 +43,9 @@ public struct CacheKey: Codable, Equatable, Hashable, Sendable {
         self.rawValue = value
         self.value = value
     }
-
 }
 
 private extension CacheKey {
-
     /// A function to remove common discrepancies that do not represent differences
     /// a user truly intended such as URLs with trailing slashes, www, etc.
     /// - Parameter url: The URL to normalize
@@ -76,5 +73,4 @@ private extension CacheKey {
 
         return normalizedURLString
     }
-
 }

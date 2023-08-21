@@ -1,7 +1,6 @@
 import Foundation
 
 public extension FileManager {
-
     /// A strongly typed directory allowing for easily specifying
     /// defaults like `documents`, `caches`, `temporary`, etc.
     struct Directory: Sendable {
@@ -11,11 +10,9 @@ public extension FileManager {
             self.url = url
         }
     }
-
 }
 
 public extension FileManager.Directory {
-
     /// Returns a directory that varies based on the OS the app is running on.
     /// - Parameter pathComponent: A path to append to the platform's default directory.
     /// - Returns: On macOS this returns the `Application Support` directory, otherwise `Documents`.
@@ -72,5 +69,4 @@ public extension FileManager.Directory {
             url: FileManager.default.urls(for: .applicationSupportDirectory, in: .userDomainMask).first!.appendingPathComponent(pathComponent)
         )
     }
-
 }

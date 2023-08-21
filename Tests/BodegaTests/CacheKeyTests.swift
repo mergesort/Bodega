@@ -2,7 +2,6 @@ import XCTest
 @testable import Bodega
 
 final class CacheKeyTests: XCTestCase {
-
     func testCacheKeyValues() {
         let cacheKey = CacheKey(verbatim: "cache-key")
         let hashedCacheKey = CacheKey("cache-key")
@@ -35,5 +34,4 @@ final class CacheKeyTests: XCTestCase {
         XCTAssertEqual(stringInitializedCacheKey.rawValue, urlString)
         XCTAssertEqual(verbatimInitializedCacheKey.rawValue, urlString)
     }
-
 }

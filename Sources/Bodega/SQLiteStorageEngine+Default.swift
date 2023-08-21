@@ -1,5 +1,4 @@
 public extension SQLiteStorageEngine {
-
     /// An ``SQLiteStorageEngine`` located in the platform-specific default storage directory.
     ///
     /// Equivalent to:
@@ -16,5 +15,4 @@ public extension SQLiteStorageEngine {
     static func `default`(appendingPath pathComponent: String) -> SQLiteStorageEngine {
         SQLiteStorageEngine(directory: .defaultStorageDirectory(appendingPath: pathComponent))!
     }
-
 }

@@ -13,7 +13,6 @@ import Foundation
 /// SQLiteStorageEngine(directory: .defaultStorageDirectory(appendingPath: "Assets"))
 /// ```
 public actor ObjectStorage<Object: Codable> {
-
     private let storage: StorageEngine
 
     // A property for performance reasons, to avoid creating a new encoder on every write, N times for array-based methods.
@@ -160,5 +159,4 @@ public actor ObjectStorage<Object: Codable> {
     public func updatedAt(forKey key: CacheKey) async -> Date? {
         return await storage.updatedAt(key: key)
     }
-
 }
