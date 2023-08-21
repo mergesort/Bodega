@@ -104,7 +104,7 @@ let animalsStorage = SQLiteStorageEngine(directory: .caches(appendingPath: "Anim
 
 ## FileManager.Directory
 
-Above we setup an ``SQLiteStorageEngine`` pointing to the `.caches` directory. This is thanks to a few static functions on `FileManager.Directory` that handle the locations most iOS and macOS apps store data.
+Above we set up an ``SQLiteStorageEngine`` pointing to the `.caches` directory. This is thanks to a few static functions on `FileManager.Directory` that handle the locations most iOS and macOS apps store data.
 
 ```swift
 // Works only on macOS

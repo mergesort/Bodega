@@ -6,9 +6,9 @@ A simple store all your basic needs, and also so much more. 🐱
 
 Bodega is an actor-based library that started as a simple cache based on reading and writing files to/from disk with an incredibly simple API. The ``DiskStorageEngine`` still provides that functionality, but Bodega has also blossomed into much more, offering a form of infrastructure that any app's data can use.
 
-Bodega's ``StorageEngine`` is at the heart of what's possible. Conforming any database, persistence layer, or even an API server, to the ``StorageEngine`` protocol automatically provides an incredibly simple data layer for your app thanks to Bodega's ``ObjectStorage``. Rather than thinking about `Data` and databases developers interact with their app's Swift types no matter what those may be, have a unified API, and concurrency handled out of the box.
+Bodega's ``StorageEngine`` is at the heart of what's possible. Conforming any database, persistence layer, or even an API server, to the ``StorageEngine`` protocol automatically provides an incredibly simple data layer for your app thanks to Bodega's ``ObjectStorage``. Rather than thinking about `Data` and databases developers interact with regular ol' Swift types. You can store whatever data you want with a unified API for persistence, and concurrency handled out of the box.
 
-Bodega provides two kinds of storage primitives for you, ``StorageEngine`` and ``ObjectStorage``. The ``StorageEngine`` lets you write `Data` to your data storage, whether it's files on disk, SQLite, or your own database. An ``ObjectStorage`` offers a unified layer over ``StorageEngine``s, providing a single API for saving `Codable` objects to the ``StorageEngine`` of your choice. ``Bodega`` has a ``DiskStorageEngine`` and ``SQLiteStorageEngine`` built in, or you can even build a ``StorageEngine`` based on your app's persistencey layer, database, or API server if you want a simple way to interface with your API. Composing storage engines allows you to create complex data pipelines, for example imagine querying the keychain for an API token, hitting your API, and saving the resulting items into a database, all with one API call. The possibilities are endless.
+Bodega provides two kinds of storage primitives for you, ``StorageEngine`` and ``ObjectStorage``. ``StorageEngine`` lets you write `Data` to your data storage, whether it's files on disk, SQLite, or your own database. ``ObjectStorage`` offers a unified layer over ``StorageEngine``s, providing a single API for saving `Codable` objects to the ``StorageEngine`` of your choice. ``Bodega`` has a ``DiskStorageEngine`` and ``SQLiteStorageEngine`` built in, or you can even build a ``StorageEngine`` based on your app's persistencey layer, database, or API server if you want a simple way to interface with your API. Composing storage engines allows you to create complex data pipelines, for example imagine querying the keychain for an API token, hitting your API, and saving the resulting items into a database, all with one API call. The possibilities are endless.
 
 ## Getting Started
 
@@ -22,7 +22,7 @@ The built-in ``DiskStorageEngine`` and ``SQLiteStorageEngine`` should be more th
 
 - <doc:Using-StorageEngines>
 
-Most of the time though you'll find yourself working with Swift models rather than `Data` directly, a task ``ObjectStorage`` is perfect for. Learn how to setup ``ObjectStorage``, and you'll be storing Swift types in no time.
+Most of the time though you'll find yourself working with Swift models rather than `Data` directly, a task ``ObjectStorage`` is perfect for. Learn how to set up ``ObjectStorage``, and you'll be storing Swift types in no time.
 
 - <doc:Using-ObjectStorage>
 

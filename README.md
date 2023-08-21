@@ -25,7 +25,7 @@ Bodega is fully usable and useful on its own, but it's also the foundation of [B
 
 ### Getting Started
 
-Bodega provides two types of storage primitives for you, `StorageEngine` and `ObjectStorage`. A `StorageEngine` writes `Data` to a persistence layer, while `ObjectStorage ` works with Swift types that conform to `Codable`. A `StorageEngine` can save items to disk, SQLite, or even your own database, while `ObjectStorage` offers a unified layer over `StorageEngine`s, providing a single API for saving objects to any `StorageEngine` you choose. `Bodega` offers `DiskStorageEngine` and `SQLiteStorageEngine` by default, or you can even build a `StorageEngine` based on your app's server or a service like CloudKit if you want a simple way to interface with your API. You can even compose storage engines to create a complex data pipeline that hits your API and saves items into a database, all in one API call. The possibilities are endless.
+Bodega provides two types of storage primitives for you, `StorageEngine` and `ObjectStorage`. A `StorageEngine` writes `Data` to a persistence layer, while `ObjectStorage ` works with Swift types that conform to `Codable`. A `StorageEngine` can save items to disk, SQLite, or even your own database, while `ObjectStorage` offers a unified layer over `StorageEngine`s, providing a single API for saving objects to any `StorageEngine` you choose. `Bodega` offers `DiskStorageEngine` and `SQLiteStorageEngine` by default, or you can even build a `StorageEngine` based on your app's server or a service like CloudKit if you want a simple way to interface with your API. You can even compose storage engines to create a complex data pipeline that hits your API and saves items into a database, all in one API call. The possibilities are endless!
 
 ---
 
@@ -91,7 +91,7 @@ public protocol StorageEngine: Actor {
 
 ### ObjectStorage
 
-Bodega's most common usage is in [Boutique](https://github.com/mergesort/Boutique), but you can also use it as a standalone cache. Any `StorageEngine` can read or write `Data` from your persistence layer, but `ObjectStorage` provides the ability to work with Swift types, as long as they conform to `Codable`. `ObjectStorage` has a very similar API to `DiskStorage`, but with slightly different function names to be more explicit that you're working with objects and not `Data`.
+Bodega is most commonly paired with [Boutique](https://github.com/mergesort/Boutique), but you can also use it as a standalone cache. Any `StorageEngine` can read or write `Data` from your persistence layer, but `ObjectStorage` provides the ability to work with Swift types, as long as they conform to `Codable`. `ObjectStorage` has a very similar API to `DiskStorage`, but with slightly different function names to be more explicit that you're working with objects and not `Data`.
 
 ```swift
 // Initialize an ObjectStorage object
@@ -128,7 +128,7 @@ try await storage.removeObject(forKey: cacheKey)
 
 ### Further Exploration
 
-Bodega is very useful as a primitive for interacting with and persisting data, but it's even more powerful when integrated into [Boutique](https://github.com/mergesort/Boutique). Boutique is a `Store` and serves as the foundation of a Model View Controller Store architecture I've developed. MVCS brings together the familiarity and simplicity of the [MVC architecture](https://developer.apple.com/library/archive/documentation/General/Conceptual/DevPedia-CocoaCore/MVC.html) you know and love with the power of a `Store`, to give your app a simple but well-defined state management and data architecture.
+Bodega is very useful as a primitive for interacting with and persisting data, but it's even more powerful when integrated into [Boutique](https://github.com/mergesort/Boutique). Boutique is a `Store` and serves as the foundation of the complementing `Model View Controller Store` (MVCS) architecture. MVCS brings together the familiarity and simplicity of the [MVC architecture](https://developer.apple.com/library/archive/documentation/General/Conceptual/DevPedia-CocoaCore/MVC.html) you know and love with the power of a `Store`, to give your app a simple but well-defined state management and data architecture.
 
 If you'd like to learn more about how it works you can read about the philosophy in a [blog post](https://build.ms/2022/06/22/model-view-controller-store) where I explore MVCS for SwiftUI, and you can find a reference implementation of an offline-ready realtime updating MVCS app powered by Boutique in this [repo](https://github.com/mergesort/MVCS).
 

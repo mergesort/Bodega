@@ -23,7 +23,7 @@ let articlesStorage = ObjectStorage<Article>(
 )
 ```
 
-Now that ``ObjectStorage`` is setup, using it couldn't be simpler. The API is very similar to the ``StorageEngine`` API, but with slight function name differences to make the API feel more natural when working with Swift types rather than raw `Data`.
+Now that ``ObjectStorage`` is set up, using it couldn't be simpler. The API is very similar to the ``StorageEngine`` API, but with slight function name differences to make the API feel more natural when working with Swift types rather than raw `Data`.
 
 
 ```swift

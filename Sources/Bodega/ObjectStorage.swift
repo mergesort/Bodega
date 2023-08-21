@@ -2,7 +2,7 @@ import Foundation
 
 /// A unified layer over a ``StorageEngine`` primitives, allowing you to read, write, and save Swift objects.
 ///
-/// An ``ObjectStorage`` is a higher level abstraction than a ``StorageEngine``, allowing you
+/// ``ObjectStorage`` is a higher level abstraction than a ``StorageEngine``, allowing you
 /// to interact with Swift objects, never thinking about the persistence layer that's saving
 /// objects under the hood.
 ///
