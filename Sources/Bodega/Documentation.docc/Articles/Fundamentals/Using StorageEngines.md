@@ -102,6 +102,49 @@ let animalsStorage = SQLiteStorageEngine(directory: .defaultStorageDirectory(app
 let animalsStorage = SQLiteStorageEngine(directory: .caches(appendingPath: "Animals"))
 ```
 
+## PaginatedStorageEngine
+
+The ``PaginatedStorageEngine`` protocol represents additional capabilities for a ``StorageEngine``, allowing a ``StorageEngine`` to fetch pages of data on demand rather than all of the data in a ``StorageEngine`` at once. Developers often have to deal with large data sets or data that may not be available immediately, ``PaginatedStorageEngine`` is perfect for that scenario.
+
+``PaginatedStorageEngine`` is a small protocol and adds two methods atop ``StorageEngine``. ``SQLiteStorageEngine`` is a good reference for how to implement ``PaginatedStorageEngine`` if needed. 
+```swift
+public protocol PaginatedStorageEngine: StorageEngine {
+    associatedtype PaginationOptions
+    associatedtype PaginationCursor
+
+    func readData(options: PaginationOptions) -> PaginationSequence<PaginationCursor, Data>
+    func readDataAndKeys(options: PaginationOptions) -> PaginationSequence<PaginationCursor, (key: CacheKey, data: Data)>
+}
+```
+
+The methods in ``PaginatedStorageEngine`` return a ``PaginationSequence``, which conforms to `AsyncSequence`. Using ``PaginationSequence`` will feel familiar if you've used `AsyncSequence` before, and if not there's only one method to learn.
+
+Below is an example of how we can read `Data` from a `StorageEngine` in pages.
+```swift
+// Create a new `PaginationSequence` to iterate over a `StorageEngine` with 101 items
+
+let paginationSequence = await storage.readData(options: .init(limit: 50))
+
+// Create an `AsyncIterator` to retrieve data in pages
+let paginationIterator = paginationSequence.makeAsyncIterator()
+
+// Get the first 50 items in a StorageEngine by iterating over the `PaginationSequence`
+var page = try await paginationIterator.next() // page.count == 50
+
+
+// Get the next 25 items in a StorageEngine
+page = try await paginationIterator.next() // page.count == 100
+XCTAssertEqual(page?.count, 50)
+
+// Since the StorageEngine only had 101 items we will be returned 1 item, rather than 50 more
+page = try await paginationIterator.next() // page.count == 101
+
+// The next time we call `.next()` the page will be nil, since there are no more items to return
+page = try await paginationIterator.next() // page == nil
+```
+
+The beauty of using pagination is that we can now use Bodega when we aren't sure how much data we'll be dealing with. If we leveraged this to interact with a networked service like a server or CloudKit we would be able to fetch some subset of data we need for our app to function, without having to query and store all the data upfront.
+
 ## FileManager.Directory
 
 Above we set up an ``SQLiteStorageEngine`` pointing to the `.caches` directory. This is thanks to a few static functions on `FileManager.Directory` that handle the locations most iOS and macOS apps store data.
