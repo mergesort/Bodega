@@ -288,9 +288,9 @@ public actor SQLiteStorageEngine: PaginatedStorageEngine {
 
     /// Reads a page of `Data` items based on the specified ``PaginationOptions``.
     /// - Parameter options: The ``PaginationOptions`` used to read data.
-    /// - Returns: A ``Paginator`` representing access to the next page of `Data`.
-    public func readData(options: PaginationOptions) -> Paginator<Int, Data> {
-        Paginator { cursor in
+    /// - Returns: A ``PaginationSequence`` representing access to the next page of `Data`.
+    public func readData(options: PaginationOptions) -> PaginationSequence<Int, Data> {
+        PaginationSequence { cursor in
             var offset = cursor ?? 0
 
             let limit = options.limit
@@ -310,16 +310,16 @@ public actor SQLiteStorageEngine: PaginatedStorageEngine {
         }
     }
 
-    /// This method returns a `Paginator` of ``CacheKey`` and `Data` together in a tuple
+    /// This method returns a `PaginationSequence` of ``CacheKey`` and `Data` together in a tuple
     /// based on the specified ``PaginationOptions``. By returning both we allow you to know
     /// which ``CacheKey`` is bound to a specific `Data` item being retrieved.
     /// This can be useful when manual iteration over data is needed, but if you don't need
     /// to know which ``CacheKey`` that led to a piece of `Data` being retrieved
     /// you can use ``read(keys:)`` instead.
     /// - Parameter options: The ``PaginationOptions`` used to read data.
-    /// - Returns: A ``Paginator`` representing access to the next page of ``CacheKey`` and `Data`.
-    public func readDataAndKeys(options: PaginationOptions) -> Paginator<Int, (key: CacheKey, data: Data)> {
-        Paginator { cursor in
+    /// - Returns: A ``PaginationSequence`` representing access to the next page of ``CacheKey`` and `Data`.
+    public func readDataAndKeys(options: PaginationOptions) -> PaginationSequence<Int, (key: CacheKey, data: Data)> {
+        PaginationSequence { cursor in
             var offset = cursor ?? 0
 
             let limit = options.limit

@@ -265,8 +265,8 @@ final class SQLiteStorageEngineTests: XCTestCase {
     func testPagination() async throws {
         try await self.writeItemsToDatabase(count: 101)
 
-        let paginator = await storage.readDataAndKeys(options: .init(limit: 50))
-        let paginationIterator = paginator.makeAsyncIterator()
+        let paginationSequence = await storage.readDataAndKeys(options: .init(limit: 50))
+        let paginationIterator = paginationSequence.makeAsyncIterator()
 
         var page = try await paginationIterator.next()
         XCTAssertEqual(page?.count, 50)

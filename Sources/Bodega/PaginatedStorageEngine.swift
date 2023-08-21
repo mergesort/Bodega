@@ -9,12 +9,12 @@ public protocol PaginatedStorageEngine: StorageEngine {
     associatedtype PaginationOptions
     associatedtype PaginationCursor
 
-    func readDataAndKeys(options: PaginationOptions) -> Paginator<PaginationCursor, (key: CacheKey, data: Data)>
-    func readData(options: PaginationOptions) -> Paginator<PaginationCursor, Data>
+    func readDataAndKeys(options: PaginationOptions) -> PaginationSequence<PaginationCursor, (key: CacheKey, data: Data)>
+    func readData(options: PaginationOptions) -> PaginationSequence<PaginationCursor, Data>
 }
 
-/// ``Paginator`` is an ``AsyncSequence`` that can iterate over the pages fetched from ``PaginatedStorageEngine``.
-public struct Paginator<Cursor: Sendable, Item: Sendable>: AsyncSequence {
+/// ``PaginationSequence`` is an ``AsyncSequence`` that can iterate over the pages fetched from ``PaginatedStorageEngine``.
+public struct PaginationSequence<Cursor: Sendable, Item: Sendable>: AsyncSequence {
     public typealias Element = [Item]
     private let next: @Sendable (Cursor?) async throws -> (Cursor?, Element)
 
@@ -23,15 +23,15 @@ public struct Paginator<Cursor: Sendable, Item: Sendable>: AsyncSequence {
     }
 
     public func makeAsyncIterator() -> AsyncIterator {
-        AsyncIterator(state: AsyncPaginatorState(next: next))
+        AsyncIterator(state: AsyncPaginationSequenceState(next: next))
     }
 }
 
-public extension Paginator {
+public extension PaginationSequence {
     struct AsyncIterator: AsyncIteratorProtocol {
-        private let state: AsyncPaginatorState
+        private let state: AsyncPaginationSequenceState
 
-        init(state: AsyncPaginatorState) {
+        init(state: AsyncPaginationSequenceState) {
             self.state = state
         }
 
@@ -41,8 +41,8 @@ public extension Paginator {
     }
 }
 
-extension Paginator {
-    actor AsyncPaginatorState {
+extension PaginationSequence {
+    actor AsyncPaginationSequenceState {
         private var isFinished = false
         private var cursor: Cursor?
         private var next: @Sendable (Cursor?) async throws -> (Cursor?, Element)
