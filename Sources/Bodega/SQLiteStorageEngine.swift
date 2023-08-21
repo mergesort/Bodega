@@ -379,6 +379,13 @@ public extension SQLiteStorageEngine {
         }
     }
 }
+
+extension SQLiteStorageEngine.PaginationOptions: ExpressibleByIntegerLiteral {
+    public init(integerLiteral value: Int) {
+        self.init(limit: value)
+    }
+}
+
 private extension SQLiteStorageEngine {
     static func directoryExists(atURL url: URL) -> Bool {
         var isDirectory: ObjCBool = true
