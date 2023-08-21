@@ -9,8 +9,8 @@ public protocol PaginatedStorageEngine: StorageEngine {
     associatedtype PaginationOptions
     associatedtype PaginationCursor
 
-    func readDataAndKeys(options: PaginationOptions) -> PaginationSequence<PaginationCursor, (key: CacheKey, data: Data)>
     func readData(options: PaginationOptions) -> PaginationSequence<PaginationCursor, Data>
+    func readDataAndKeys(options: PaginationOptions) -> PaginationSequence<PaginationCursor, (key: CacheKey, data: Data)>
 }
 
 /// ``PaginationSequence`` is an ``AsyncSequence`` that can iterate over the pages fetched from ``PaginatedStorageEngine``.
