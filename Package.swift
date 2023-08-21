@@ -14,22 +14,32 @@ let package = Package(
             name: "Bodega",
             targets: ["Bodega"]
         ),
+        
+        .library(
+            name: "BodegaCore",
+            targets: ["BodegaCore"]
+        )
     ],
     dependencies: [
         .package(url: "https://github.com/stephencelis/SQLite.swift.git", from: Version(0, 13, 2)),
         .package(url: "https://github.com/apple/swift-docc-plugin", from: "1.0.0"),
     ],
     targets: [
+        .target(name: "BodegaCore",
+                dependencies: [],
+                swiftSettings: [.unsafeFlags(["-strict-concurrency=complete"])] // Values are minimal, targeted, complete)
+        ),
         .target(
             name: "Bodega",
             dependencies: [
+                "BodegaCore",
                 .productItem(name: "SQLite", package: "SQLite.swift", condition: nil)
             ],
             swiftSettings: [.unsafeFlags(["-strict-concurrency=complete"])] // Values are minimal, targeted, complete
         ),
         .testTarget(
             name: "BodegaTests",
-            dependencies: ["Bodega"]
+            dependencies: ["Bodega", "BodegaCore"]
         ),
     ]
 )

@@ -12,7 +12,7 @@ public struct CacheKey: Codable, Equatable, Hashable, Sendable {
     /// The `String` that was passed in to any initializer, regardless of whether it was hashed afterwards or not.
     /// Currently this is used in ``StorageEngine``s that are not file system based
     /// and will be deprecated in the future, when ``CacheKey`` is [deprecated](https://github.com/mergesort/Bodega/issues/9).
-    internal let rawValue: String
+    public let rawValue: String
 
     /// Initializes a ``CacheKey`` from a `URL`. This initializer is useful if you plan on using
     /// `CacheKey`s for storing files on disk because file have many limitations about
