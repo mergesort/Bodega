@@ -2,7 +2,6 @@ import XCTest
 @testable import Bodega
 
 final class SQLiteStorageEngineTests: XCTestCase {
-
     private var storage: SQLiteStorageEngine!
 
     override func setUp() async throws {
@@ -262,11 +261,9 @@ final class SQLiteStorageEngineTests: XCTestCase {
 
         XCTAssertNotEqual(firstWriteDate, secondWriteDate)
     }
-
 }
 
 private extension SQLiteStorageEngineTests {
-
     static let testData = Data("Test".utf8)
     static let testCacheKey = CacheKey(verbatim: "test-key")
 
@@ -283,5 +280,4 @@ private extension SQLiteStorageEngineTests {
             try await storage.write("Value \(i)".data(using: .utf8)!, key: CacheKey(verbatim: "\(i)"))
         }
     }
-
 }

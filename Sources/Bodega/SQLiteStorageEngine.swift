@@ -31,7 +31,6 @@ import SQLite
 /// While that is doable, I believe it's very unlikely the caller will have specific remedies for
 /// specific SQLite errors, so for simplicity I've made the initializer return an optional ``SQLiteStorageEngine``.
 public actor SQLiteStorageEngine: StorageEngine {
-
     private let connection: Connection
 
     /// A directory on the filesystem where your ``StorageEngine``s data will be stored.
@@ -290,7 +289,6 @@ public actor SQLiteStorageEngine: StorageEngine {
             return nil
         }
     }
-
 }
 
 private extension SQLiteStorageEngine {
@@ -298,17 +296,14 @@ private extension SQLiteStorageEngine {
 }
 
 private extension SQLiteStorageEngine {
-
     struct Expressions {}
 
     static var expressions: Expressions {
         Expressions()
     }
-
 }
 
 private extension SQLiteStorageEngine.Expressions {
-
     var keyRow: Expression<String> {
         Expression<String>("key")
     }
@@ -324,11 +319,9 @@ private extension SQLiteStorageEngine.Expressions {
     var updatedAtRow: Expression<Date> {
         Expression<Date>("updatedAt")
     }
-
 }
 
 private extension SQLiteStorageEngine {
-
     static func directoryExists(atURL url: URL) -> Bool {
         var isDirectory: ObjCBool = true
 
@@ -343,5 +336,4 @@ private extension SQLiteStorageEngine {
                 attributes: nil
             )
     }
-
 }

@@ -2,7 +2,6 @@ import XCTest
 @testable import Bodega
 
 final class DiskStorageEngineTests: XCTestCase {
-
     private var storage: DiskStorageEngine!
 
     override func setUp() async throws {
@@ -302,11 +301,9 @@ final class DiskStorageEngineTests: XCTestCase {
         let accessDate2 = await storage.lastAccessed(key: Self.testCacheKey)
         XCTAssertEqual(accessDate, accessDate2)
     }
-
 }
 
 private extension DiskStorageEngineTests {
-
     static let testData = Data("Test".utf8)
     static let testCacheKey = CacheKey(verbatim: "test-key")
 
@@ -323,5 +320,4 @@ private extension DiskStorageEngineTests {
             try await storage.write("Value \(i)".data(using: .utf8)!, key: CacheKey(verbatim: "\(i)"))
         }
     }
-
 }

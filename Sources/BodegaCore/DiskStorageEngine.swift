@@ -15,7 +15,6 @@ import Foundation
 /// default ``StorageEngine``. If you have your own persistence layer such as Realm, Core Data, etc,
 /// you can easily build your own ``StorageEngine`` to plug into ``ObjectStorage``.
 public actor DiskStorageEngine: StorageEngine {
-
     /// A directory on the filesystem where your ``StorageEngine``s data will be stored.
     private let directory: FileManager.Directory
 
@@ -176,11 +175,9 @@ public actor DiskStorageEngine: StorageEngine {
         return try? self.concatenatedPath(key: key.value)
             .resourceValues(forKeys: [.contentAccessDateKey]).contentAccessDate
     }
-
 }
 
 private extension DiskStorageEngine {
-
     static func createDirectory(url: URL) throws {
         try FileManager.default
             .createDirectory(
@@ -199,5 +196,4 @@ private extension DiskStorageEngine {
     func concatenatedPath(key: String) -> URL {
         return self.directory.url.appendingPathComponent(key)
     }
-
 }

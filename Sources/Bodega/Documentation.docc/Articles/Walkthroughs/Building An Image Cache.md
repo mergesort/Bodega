@@ -16,7 +16,6 @@ Below is the `ImageCache`, and like any cache it has an operation to save data a
 import Bodega
 
 final class ImageCache: ObservableObject {
-
     // 1
     private let imageStore = SQLiteStorageEngine.default(appendingPath: "Images")
 
@@ -33,7 +32,6 @@ final class ImageCache: ObservableObject {
         guard let imageData = await self.imageStore.read(key: key) else { return nil }
         return UIImage(data: imageData)
     }
-
 }
 ```
 
@@ -49,12 +47,10 @@ Now that we have a cache for storing images, we'll need to fetch images to store
 
 ```swift
 struct ImageFetchingAPI {
-
     func download(url: URL) async -> UIImage {
         // Make a network call download an image
         return UIImage()
     }
-
 }
 ```
 
@@ -70,7 +66,6 @@ Having the ability to save, load, and download images is great, but for the user
 import SwiftUI
 
 struct ProfileHeaderView: View {
-
     // 1 
     @StateObject private var imageCache = ImageCache()
 
@@ -99,7 +94,8 @@ struct ProfileHeaderView: View {
             Spacer()
         }
         .frame(alignment: .center)
-        }.task({
+        }
+        .task({
             // 4
             if let cachedImage = await self.imageCache.image(forKey: Self.avatarCacheKey) {
                 self.avatarImage = cachedImage
