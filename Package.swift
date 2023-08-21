@@ -25,15 +25,15 @@ let package = Package(
         .package(url: "https://github.com/apple/swift-docc-plugin", from: "1.0.0"),
     ],
     targets: [
-        .target(name: "BodegaCore",
-                dependencies: [],
-                swiftSettings: [.unsafeFlags(["-strict-concurrency=complete"])] // Values are minimal, targeted, complete)
+        .target(
+            name: "BodegaCore",
+            dependencies: [],
+            swiftSettings: [.unsafeFlags(["-strict-concurrency=complete"])] // Values are minimal, targeted, complete)
         ),
         .target(
             name: "Bodega",
             dependencies: [
-                "BodegaCore",
-                .productItem(name: "SQLite", package: "SQLite.swift", condition: nil)
+                "BodegaCore", .productItem(name: "SQLite", package: "SQLite.swift", condition: nil)
             ],
             swiftSettings: [.unsafeFlags(["-strict-concurrency=complete"])] // Values are minimal, targeted, complete
         ),

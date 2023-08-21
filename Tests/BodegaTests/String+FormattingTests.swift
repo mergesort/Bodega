@@ -1,5 +1,4 @@
 import XCTest
-@testable import Bodega
 @testable import BodegaCore
 
 final class StringFormattingTests: XCTestCase {

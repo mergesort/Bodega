@@ -1,6 +1,6 @@
+@_exported import BodegaCore
 import Foundation
 import SQLite
-@_exported import BodegaCore
 
 /// A ``StorageEngine`` based on an SQLite database.
 ///
