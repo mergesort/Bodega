@@ -86,4 +86,17 @@ extension StorageEngine {
         let allKeys = await self.allKeys()
         return await self.readDataAndKeys(keys: allKeys)
     }
+    
+    /// Checks whether a value with a key is persisted.
+    /// - Parameter key: The key to check for existence.
+    /// - Returns: If the key exists the function returns true, false if it does not.
+    public func keyExists(_ key: CacheKey) async -> Bool {
+        return await self.allKeys().contains(key)
+    }
+    
+    /// Read the number of keys located in the ``StorageEngine``.
+    /// - Returns: The number of keys located in the ``StorageEngine``
+    public func keyCount() async -> Int {
+        return await self.allKeys().count
+    }
 }
