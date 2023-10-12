@@ -127,7 +127,8 @@ public actor DiskStorageEngine: StorageEngine {
     /// - Parameter key: The key to for existence.
     /// - Returns: If the key exists the function returns true, false if it does not.
     public func keyExists(_ key: CacheKey) -> Bool {
-        self.allKeys().contains(key)
+        let fileURL = self.concatenatedPath(key: key)
+        return Self.fileExists(atURL: fileURL)
     }
 
     /// Iterates through a directory to find the total number of `Data` items.
@@ -191,6 +192,13 @@ private extension DiskStorageEngine {
         var isDirectory: ObjCBool = true
 
         return FileManager.default.fileExists(atPath: url.path, isDirectory: &isDirectory)
+    }
+    
+    static func fileExists(atURL url: URL) -> Bool {
+        var isDirectory: ObjCBool = true
+
+        let exists = FileManager.default.fileExists(atPath: url.path, isDirectory: &isDirectory)
+        return exists == true && isDirectory.boolValue == false
     }
 
     func concatenatedPath(key: CacheKey) -> URL {
