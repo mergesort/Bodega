@@ -124,6 +124,8 @@ public actor DiskStorageEngine: StorageEngine {
     }
 
     /// Checks whether a value with a key is persisted.
+    ///
+    /// This implementation provides `O(1)` checking for the key's existence.
     /// - Parameter key: The key to check for existence.
     /// - Returns: If the key exists the function returns true, false if it does not.
     public func keyExists(_ key: CacheKey) -> Bool {
