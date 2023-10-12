@@ -31,7 +31,7 @@ public actor DiskStorageEngine: StorageEngine {
     ///   - data: The `Data` being stored to disk.
     ///   - key: A ``CacheKey`` for matching `Data` to a location on disk.
     public func write(_ data: Data, key: CacheKey) throws {
-        let fileURL = self.concatenatedPath(key: key.value)
+        let fileURL = self.concatenatedPath(key: key)
         let folderURL = fileURL.deletingLastPathComponent()
 
         if !Self.directoryExists(atURL: folderURL) {
@@ -56,7 +56,7 @@ public actor DiskStorageEngine: StorageEngine {
     ///   - key: A ``CacheKey`` for matching `Data` to a location on disk.
     /// - Returns: The `Data` stored on disk if it exists, nil if there is no `Data` stored for the `CacheKey`.
     public func read(key: CacheKey) -> Data? {
-        return try? Data(contentsOf: self.concatenatedPath(key: key.value))
+        return try? Data(contentsOf: self.concatenatedPath(key: key))
     }
 
     /// Reads `Data` from disk based on the associated array of ``CacheKey``s provided as a parameter
@@ -104,7 +104,7 @@ public actor DiskStorageEngine: StorageEngine {
     ///   - key: A ``CacheKey`` for matching `Data` to a location on disk.
     public func remove(key: CacheKey) throws {
         do {
-            try FileManager.default.removeItem(at: self.concatenatedPath(key: key.value))
+            try FileManager.default.removeItem(at: self.concatenatedPath(key: key))
         } catch CocoaError.fileNoSuchFile {
             // No-op, we treat deleting a non-existent file/folder as a successful removal rather than throwing
         } catch {
@@ -154,7 +154,7 @@ public actor DiskStorageEngine: StorageEngine {
     ///   - key: A ``CacheKey`` for matching `Data` to a location on disk.
     /// - Returns: The creation date of the `Data` on disk if it exists, nil if there is no `Data` stored for the `CacheKey`.
     public func createdAt(key: CacheKey) -> Date? {
-        return try? self.concatenatedPath(key: key.value)
+        return try? self.concatenatedPath(key: key)
             .resourceValues(forKeys: [.creationDateKey]).creationDate
     }
 
@@ -163,7 +163,7 @@ public actor DiskStorageEngine: StorageEngine {
     ///   - key: A ``CacheKey`` for matching `Data` to a location on disk.
     /// - Returns: The updatedAt date of the `Data` on disk if it exists, nil if there is no `Data` stored for the ``CacheKey``.
     public func updatedAt(key: CacheKey) -> Date? {
-        return try? self.concatenatedPath(key: key.value)
+        return try? self.concatenatedPath(key: key)
             .resourceValues(forKeys: [.contentModificationDateKey]).contentModificationDate
     }
 
@@ -172,7 +172,7 @@ public actor DiskStorageEngine: StorageEngine {
     ///   - key: A ``CacheKey`` for matching `Data` to a location on disk.
     /// - Returns: The last access date of the `Data` on disk if it exists, nil if there is no `Data` stored for the ``CacheKey``.
     public func lastAccessed(key: CacheKey) -> Date? {
-        return try? self.concatenatedPath(key: key.value)
+        return try? self.concatenatedPath(key: key)
             .resourceValues(forKeys: [.contentAccessDateKey]).contentAccessDate
     }
 }
@@ -193,7 +193,7 @@ private extension DiskStorageEngine {
         return FileManager.default.fileExists(atPath: url.path, isDirectory: &isDirectory)
     }
 
-    func concatenatedPath(key: String) -> URL {
-        return self.directory.url.appendingPathComponent(key)
+    func concatenatedPath(key: CacheKey) -> URL {
+        return self.directory.url.appendingPathComponent(key.value)
     }
 }
