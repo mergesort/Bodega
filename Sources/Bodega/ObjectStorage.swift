@@ -84,10 +84,15 @@ public actor ObjectStorage<Object: Codable> {
     /// - Returns: An array of `[(CacheKey, Object)]` read if it exists,
     /// and an empty array if there are no `Objects`s matching the `keys` passed in.
     public func objectsAndKeys(keys: [CacheKey]) async -> [(key: CacheKey, object: Object)] {
-        return zip(
-            keys,
-            await self.objects(forKeys: keys)
-        ).map { ($0, $1) }
+        var objectsAndKeys: [(key: CacheKey, object: Object)] = []
+
+        for key in keys {
+            if let object = await self.object(forKey: key) {
+                objectsAndKeys.append((key, object))
+            }
+        }
+
+        return objectsAndKeys
     }
 
     /// Reads all `[Object]` objects.
