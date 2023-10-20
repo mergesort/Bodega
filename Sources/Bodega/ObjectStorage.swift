@@ -87,7 +87,8 @@ public actor ObjectStorage<Object: Codable> {
         return zip(
             keys,
             await self.objects(forKeys: keys)
-        ).map { ($0, $1) }
+        )
+        .map({ ($0, $1) })
     }
 
     /// Reads all `[Object]` objects.

@@ -75,7 +75,8 @@ public actor DiskStorageEngine: StorageEngine {
         return zip(
             keys,
             await self.read(keys: keys)
-        ).map { ($0, $1) }
+        )
+        .map({ ($0, $1) })
     }
 
     /// Reads all the `[Data]` located in the `directory`.
