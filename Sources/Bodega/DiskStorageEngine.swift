@@ -72,10 +72,15 @@ public actor DiskStorageEngine: StorageEngine {
     /// - Returns: An array of `[(CacheKey, Data)]` read from disk if the ``CacheKey``s exist,
     /// and an empty array if there are no `Data` items matching the `keys` passed in.
     public func readDataAndKeys(keys: [CacheKey]) async -> [(key: CacheKey, data: Data)] {
-        return zip(
-            keys,
-            await self.read(keys: keys)
-        ).map { ($0, $1) }
+        var dataAndKeys: [(key: CacheKey, data: Data)] = []
+
+        for key in keys {
+            if let data = self.read(key: key) {
+                dataAndKeys.append((key, data))
+            }
+        }
+
+        return dataAndKeys
     }
 
     /// Reads all the `[Data]` located in the `directory`.

@@ -84,6 +84,19 @@ final class DiskStorageEngineTests: XCTestCase {
             "Value 9"
         ])
     }
+    
+    func testReadingDataAndNonExistentKeys() async throws {
+        try await self.writeItemsToDisk(count: 5)
+        let allDataAndKeys = await storage.readAllDataAndKeys()
+            .sorted(by: { $0.key.value > $1.key.value })
+        
+        let goodAndBadKeys = (0 ..< 10).reversed().map({ CacheKey(verbatim: "\($0)") })
+        let validDataAndKeys = await storage.readDataAndKeys(keys: goodAndBadKeys)
+            .sorted(by: { $0.key.value > $1.key.value })
+        
+        XCTAssertEqual(allDataAndKeys.map(\.key), validDataAndKeys.map(\.key))
+        XCTAssertEqual(allDataAndKeys.map(\.data), validDataAndKeys.map(\.data))
+    }
 
     func testReadingAllDataSucceeds() async throws {
         try await self.writeItemsToDisk(count: 10)

@@ -153,6 +153,19 @@ class ObjectStorageTests: XCTestCase {
         ])
     }
 
+    func testReadingObjectsAndNonExistentKeys() async throws {
+        try await self.writeObjectsToDisk(count: 5)
+        let allDataAndKeys = await storage.allObjectsAndKeys()
+            .sorted(by: { $0.key.value > $1.key.value })
+        
+        let goodAndBadKeys = (0 ..< 10).reversed().map({ CacheKey(verbatim: "\($0)") })
+        let validObjectsAndKeys = await storage.objectsAndKeys(keys: goodAndBadKeys)
+            .sorted(by: { $0.key.value > $1.key.value })
+        
+        XCTAssertEqual(allDataAndKeys.map(\.key), validObjectsAndKeys.map(\.key))
+        XCTAssertEqual(allDataAndKeys.map(\.object), validObjectsAndKeys.map(\.object))
+    }
+    
     func testReadingAllObjectsSucceeds() async throws {
         try await self.writeObjectsToDisk(count: 10)
 
