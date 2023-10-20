@@ -94,7 +94,7 @@ extension StorageEngine {
     public func keysExist(_ keys: [CacheKey]) async -> [CacheKey] {
         let allKeys = await self.allKeys()
         let keySet = Set(allKeys)
-        return keys.filter { keySet.contains($0) }
+        return keys.filter({ keySet.contains($0) })
     }
     
     /// Read the number of keys located in the ``StorageEngine``.

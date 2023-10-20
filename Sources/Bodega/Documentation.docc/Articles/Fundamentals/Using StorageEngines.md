@@ -28,6 +28,7 @@ public protocol StorageEngine: Actor {
     func removeAllData() async throws
 
     func keyExists(_ key: CacheKey) async -> Bool
+    func keysExist(_ keys: [CacheKey]) async -> [CacheKey]
     func keyCount() async -> Int
     func allKeys() async -> [CacheKey]
 
