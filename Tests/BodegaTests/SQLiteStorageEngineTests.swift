@@ -229,6 +229,16 @@ final class SQLiteStorageEngineTests: XCTestCase {
         let cacheKeyExistsAfterRemovingData = await storage.keyExists(Self.testCacheKey)
         XCTAssertFalse(cacheKeyExistsAfterRemovingData)
     }
+    
+    func testKeysExist() async throws {
+        let allKeys = Self.storedKeysAndData.map(\.key) + [Self.testCacheKey]
+        let noKeysExistBeforeAddingData = await storage.keysExist(allKeys)
+        XCTAssertTrue(noKeysExistBeforeAddingData.isEmpty)
+        
+        try await storage.write(Self.testData, key: Self.testCacheKey)
+        let someKeysExist = await storage.keysExist(allKeys)
+        XCTAssertEqual(someKeysExist, [Self.testCacheKey])
+    }
 
     func testAllKeys() async throws {
         try await self.writeItemsToDatabase(count: 10)

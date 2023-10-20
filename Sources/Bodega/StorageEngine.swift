@@ -29,6 +29,7 @@ public protocol StorageEngine: Actor {
     func removeAllData() async throws
 
     func keyExists(_ key: CacheKey) async -> Bool
+    func keysExist(_ keys: [CacheKey]) async -> [CacheKey]
     func keyCount() async -> Int
     func allKeys() async -> [CacheKey]
 
@@ -85,5 +86,20 @@ extension StorageEngine {
     public func readAllDataAndKeys() async -> [(key: CacheKey, data: Data)] {
         let allKeys = await self.allKeys()
         return await self.readDataAndKeys(keys: allKeys)
+    }
+    
+    /// Filters the provided keys to return only the ones that exist in the engine
+    /// - Parameter keys: The list of keys to check for existence.
+    /// - Returns: An array of keys that exist. This value is always a subset of the `keys` passed in.
+    public func keysExist(_ keys: [CacheKey]) async -> [CacheKey] {
+        let allKeys = await self.allKeys()
+        let keySet = Set(allKeys)
+        return keys.filter { keySet.contains($0) }
+    }
+    
+    /// Read the number of keys located in the ``StorageEngine``.
+    /// - Returns: The number of keys located in the ``StorageEngine``
+    public func keyCount() async -> Int {
+        return await self.allKeys().count
     }
 }

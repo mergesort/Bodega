@@ -228,6 +228,24 @@ public actor SQLiteStorageEngine: StorageEngine {
             return false
         }
     }
+    
+    /// Filters the provided keys to return only the ones that exist in the engine
+    /// - Parameter keys: The list of keys to check for existence.
+    /// - Returns: An array of keys that exist. This value is always a subset of the `keys` passed in.
+    public func keysExist(_ keys: [CacheKey]) async -> [CacheKey] {
+        do {
+            let rawKeys = keys.map(\.rawValue)
+            
+            let query = Self.storageTable
+                .select(Self.expressions.keyRow)
+                .filter(rawKeys.contains(Self.expressions.keyRow))
+            
+            return try self.connection.prepare(query)
+                .map({ CacheKey(verbatim: $0[Self.expressions.keyRow]) })
+        } catch {
+            return []
+        }
+    }
 
     /// Iterates through the database to find the total number of `Data` items.
     /// - Returns: The file/key count.
