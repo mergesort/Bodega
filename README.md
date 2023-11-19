@@ -143,7 +143,6 @@ This project provides multiple forms of delivering feedback to maintainers.
 - If you still have a question, enhancement, or a way to improve Bodega, this project leverages GitHub's [Discussions](https://github.com/mergesort/Bodega/discussions) feature.
 
 - If you find a bug and wish to report an [issue](https://github.com/mergesort/Bodega/issues) would be appreciated.
-### Feedback
 
 ---
 
