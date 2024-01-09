@@ -3,9 +3,13 @@ import XCTest
 
 final class SQLiteStorageEngineTests: XCTestCase {
     private var storage: SQLiteStorageEngine!
+    private var storageDirectory: FileManager.Directory!
 
     override func setUp() async throws {
         storage = SQLiteStorageEngine(directory: .temporary(appendingPath: "Tests"))
+        let directory = FileManager.Directory.temporary(appendingPath: "Tests")
+        self.storage = SQLiteStorageEngine(directory: directory)
+        self.storageDirectory = directory
 
         try await storage.removeAllData()
     }
@@ -197,18 +201,16 @@ final class SQLiteStorageEngineTests: XCTestCase {
 
     func testVacuumAfterRemoveAllData() async throws {
         let directory: FileManager.Directory = .temporary(appendingPath: "VacuumTests")
-        let otherStorage = SQLiteStorageEngine(directory: directory, databaseFilename: "data")!
+        try await self.writeItemsToDatabase(count: 100)
 
         for i in 0 ..< 100 {
-            // This encoding could fail in some use cases but we're going to use very simple strings for testing
-            try await otherStorage.write("Value \(i)".data(using: .utf8)!, key: CacheKey(verbatim: "\(i)"))
-        }
-
-        let filledDatabaseSize: Int = try directory.url.appendingPathComponent("data").appendingPathExtension("sqlite3").resourceValues(forKeys: [.fileSizeKey]).fileSize ?? 0
+        let filledDatabaseSize = try storageDirectory.url.appendingPathComponent("data").appendingPathExtension("sqlite3").resourceValues(forKeys: [.fileSizeKey]).fileSize ?? 0
 
         try await otherStorage.removeAllData()
+        try await storage.removeAllData()
 
         let emptyDatabaseSize: Int = try directory.url.appendingPathComponent("data").appendingPathExtension("sqlite3").resourceValues(forKeys: [.fileSizeKey]).fileSize ?? 0
+        let emptyDatabaseSize = try storageDirectory.url.appendingPathComponent("data").appendingPathExtension("sqlite3").resourceValues(forKeys: [.fileSizeKey]).fileSize ?? 0
 
         // check that the sqlite3 file decreased in size after calling removeAllData, meaning that vacuum-ing the database works
         XCTAssertLessThan(emptyDatabaseSize, filledDatabaseSize)
