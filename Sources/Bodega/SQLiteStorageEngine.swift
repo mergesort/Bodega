@@ -211,6 +211,7 @@ public actor SQLiteStorageEngine: StorageEngine {
     /// Removes all the `Data` items from the database.
     public func removeAllData() throws {
         try self.connection.run(Self.storageTable.delete())
+        let _ = try? self.connection.vacuum()
     }
 
     /// Checks whether a value with a key is persisted.
