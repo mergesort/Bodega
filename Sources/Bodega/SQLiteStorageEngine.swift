@@ -48,7 +48,12 @@ public actor SQLiteStorageEngine: StorageEngine {
                 try Self.createDirectory(url: directory.url)
             }
 
-            self.connection = try Connection(directory.url.appendingPathComponent(filename).appendingPathExtension("sqlite3").absoluteString)
+            if #available(macOS 13.0, iOS 16.0, tvOS 16.0, watchOS 9.0, *) {
+                self.connection = try Connection(directory.url.appendingPathComponent(filename).appendingPathExtension("sqlite3").path())
+            } else {
+                self.connection = try Connection(directory.url.appendingPathComponent(filename).appendingPathExtension("sqlite3").path)
+            }
+
             self.connection.busyTimeout = 3
 
             try self.connection.run(Self.storageTable.create(ifNotExists: true) { table in
