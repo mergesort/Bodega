@@ -28,7 +28,7 @@ public extension FileManager.Directory {
     /// - Parameter pathComponent: A path to append to the platform's documents directory.
     static func documents(appendingPath pathComponent: String) -> Self {
         let url: URL
-        if #available(iOS 16.0, macOS 13.0, *) {
+        if #available(iOS 16.0, macOS 13.0, tvOS 16.0, *) {
             url = URL.documentsDirectory.appending(path: pathComponent)
         } else {
             url = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask).first!.appendingPathComponent(pathComponent)
@@ -41,7 +41,7 @@ public extension FileManager.Directory {
     /// - Parameter pathComponent: A path to append to the platform's caches directory.
     static func caches(appendingPath pathComponent: String) -> Self {
         let url: URL
-        if #available(iOS 16.0, macOS 13.0, *) {
+        if #available(iOS 16.0, macOS 13.0, tvOS 16.0, *) {
             url = URL.cachesDirectory.appending(path: pathComponent)
         } else {
             url = FileManager.default.urls(for: .cachesDirectory, in: .userDomainMask).first!.appendingPathComponent(pathComponent)
@@ -54,7 +54,7 @@ public extension FileManager.Directory {
     /// - Parameter pathComponent: A path to append to the platform's temporary directory.
     static func temporary(appendingPath pathComponent: String) -> Self {
         let url: URL
-        if #available(iOS 16.0, macOS 13.0, *) {
+        if #available(iOS 16.0, macOS 13.0, tvOS 16.0, *) {
             url = URL.temporaryDirectory.appending(path: pathComponent)
         } else {
             url = FileManager.default.temporaryDirectory.appendingPathComponent(pathComponent)
