@@ -62,6 +62,7 @@ extension StorageEngine {
     /// - Parameters:
     ///   - keys: A `[CacheKey]` for matching multiple `Data` items.
     public func remove(keys: [CacheKey]) async throws {
+        guard !keys.isEmpty else { return }
         for key in keys {
             try await self.remove(key: key)
         }

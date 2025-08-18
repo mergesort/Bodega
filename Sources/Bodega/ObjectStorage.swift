@@ -42,6 +42,7 @@ public actor ObjectStorage<Object: Codable> {
     ///   - objectsAndKeys: An array of `[(CacheKey, Object)]` to store
     ///   multiple objects with their associated keys at once.
     public func store(_ objectsAndKeys: [(key: CacheKey, object: Object)]) async throws {
+        guard !objectsAndKeys.isEmpty else { return }
         let dataAndKeys = try objectsAndKeys.map({ try ($0.key, self.encoder.encode($0.object)) })
 
         try await storage.write(dataAndKeys)
@@ -127,9 +128,8 @@ public actor ObjectStorage<Object: Codable> {
     /// - Parameters:
     ///   - keys: A `[CacheKey]` for matching multiple `Object`s.
     public func removeObject(forKeys keys: [CacheKey]) async throws {
-        for key in keys {
-            try await storage.remove(key: key)
-        }
+        guard !keys.isEmpty else { return }
+        try await storage.remove(keys: keys)
     }
 
     /// Removes all of the `Object`s.

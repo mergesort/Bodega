@@ -111,6 +111,13 @@ class ObjectStorageTests: XCTestCase {
         XCTAssertEqual(Self.storedKeysAndObjects.map(\.object), readKeysAndObjects.map(\.object))
     }
 
+    func testWritingEmptyObjectsAndKeys() async throws {
+        try await storage.store([] as [(key: CacheKey, object: CodableObject)])
+
+        let objectCount = await storage.keyCount()
+        XCTAssertEqual(objectCount, 0)
+    }
+
     func testReadingObjectSucceeds() async throws {
         // Read one object
         try await storage.store(Self.testObject, forKey: Self.testCacheKey)
@@ -249,6 +256,14 @@ class ObjectStorageTests: XCTestCase {
         XCTAssertEqual(allData[0].key, storedKeysAndData[3].key)
         XCTAssertEqual(allData[0].object, storedKeysAndData[3].object)
 
+    }
+
+    func testRemovingEmptyKeysDoesNothing() async throws {
+        try await storage.store(Self.storedKeysAndObjects)
+        try await storage.removeObject(forKeys: [] as [CacheKey])
+
+        let objectCount = await storage.keyCount()
+        XCTAssertEqual(objectCount, Self.storedKeysAndObjects.count)
     }
 
     func testInvalidRemoveErrors() async throws {
