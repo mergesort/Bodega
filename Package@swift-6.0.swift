@@ -1,4 +1,4 @@
-// swift-tools-version:5.10
+// swift-tools-version:6.0
 // The swift-tools-version declares the minimum version of Swift required to build this package.
 
 import PackageDescription
@@ -18,7 +18,7 @@ let package = Package(
     ],
     dependencies: [
         .package(url: "https://github.com/apple/swift-crypto", from: Version(3, 9, 1)),
-        .package(url: "https://github.com/stephencelis/SQLite.swift", from: Version(0, 13, 2)),
+        .package(url: "https://github.com/stephencelis/SQLite.swift.git", from: Version(0, 13, 2)),
         .package(url: "https://github.com/apple/swift-docc-plugin", from: "1.0.0"),
     ],
     targets: [
