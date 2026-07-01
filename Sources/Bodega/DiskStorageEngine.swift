@@ -46,6 +46,7 @@ public actor DiskStorageEngine: StorageEngine {
     ///   - dataAndKeys: An array of the `[(CacheKey, Data)]` to store
     ///   multiple `Data` items with their associated keys at once.
     public func write(_ dataAndKeys: [(key: CacheKey, data: Data)]) throws {
+        guard !dataAndKeys.isEmpty else { return }
         for dataAndKey in dataAndKeys {
             try self.write(dataAndKey.data, key: dataAndKey.key)
         }
