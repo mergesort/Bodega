@@ -29,7 +29,7 @@ final class ImageCache: ObservableObject {
 
     // 3
     func image(forKey key: CacheKey) async -> UIImage? {
-        guard let imageData = await self.imageStore.read(key: key) else { return nil }
+        guard let imageData = try? await self.imageStore.read(key: key) else { return nil }
         return UIImage(data: imageData)
     }
 }
@@ -39,7 +39,7 @@ final class ImageCache: ObservableObject {
 
 2. Our `cache(image: UIImage, forKey: CacheKey)` function does one thing and does it well. If the image passed into the function can be converted to `Data`, we will write that `Data` into the ``StorageEngine``. If it can't write the `Data` to the ``StorageEngine`` we'll return early instead. If there are any errors thrown when writing the data they will be provided to the caller of the `cache` function.
 
-3. Our `image(forKey: CacheKey)` function is similarly focused, tasked with retrieving an image from the cache if that image exists in our cache. If you haven't yet retrieved an image from the server then it won't be in the cache. This case is very common so it doesn't make sense to throw errors, instead a `nil` value signals to us that we have a reason to attempt retrieving an image from our API.
+3. Our `image(forKey: CacheKey)` function is similarly focused, tasked with retrieving an image from the cache if that image exists in our cache. If you haven't yet retrieved an image from the server then it won't be in the cache. A missing entry returns `nil`; a failed storage read throws. This disposable image cache deliberately uses `try?` to treat either outcome as a cache miss and download the image again. Persistent user data should propagate or handle the error instead.
 
 ## ImageFetchingAPI 
 

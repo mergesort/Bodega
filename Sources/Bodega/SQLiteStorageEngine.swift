@@ -29,6 +29,7 @@ import SQLite
 /// One alternative is to make the initializer `throw`, and that's a perfectly reasonable tradeoff.
 /// While that is doable, I believe it's very unlikely the caller will have specific remedies for
 /// specific SQLite errors, so for simplicity I've made the initializer return an optional ``SQLiteStorageEngine``.
+/// Reads throw on query, iteration, and row-decoding errors rather than returning empty results.
 public actor SQLiteStorageEngine: StorageEngine {
     private let connection: Connection
 
@@ -73,7 +74,7 @@ public actor SQLiteStorageEngine: StorageEngine {
             Self.expressions.updatedAtRow <- Date()
         ]
 
-        if self.keyExists(key) {
+        if try self.keyExists(key) {
             try self.connection.run(
                 Self.storageTable
                     .filter(Self.expressions.keyRow == key.rawValue)
@@ -108,17 +109,13 @@ public actor SQLiteStorageEngine: StorageEngine {
     /// - Parameters:
     ///   - key: A ``CacheKey`` for matching `Data`.
     /// - Returns: The `Data` stored if it exists, nil if there is no `Data` stored for the `CacheKey`.
-    public func read(key: CacheKey) -> Data? {
-        do {
-            let query = Self.storageTable
-                .select(Self.expressions.keyRow, Self.expressions.dataRow)
-                .filter(Self.expressions.keyRow == key.rawValue)
-                .limit(1)
+    public func read(key: CacheKey) throws -> Data? {
+        let query = Self.storageTable
+            .select(Self.expressions.dataRow)
+            .filter(Self.expressions.keyRow == key.rawValue)
+            .limit(1)
 
-            return try self.connection.pluck(query)?[Self.expressions.dataRow]
-        } catch {
-            return nil
-        }
+        return try self.connection.pluck(query)?.get(Self.expressions.dataRow)
     }
 
     /// Reads `Data` items based on the associated array of ``CacheKey``s provided as a parameter.
@@ -126,17 +123,13 @@ public actor SQLiteStorageEngine: StorageEngine {
     ///   - keys: A `[CacheKey]` for matching multiple `Data` items.
     /// - Returns: An array of `[Data]` stored on disk if the `CacheKey`s exist,
     /// and an `[]` if there is no `Data` matching the `keys` passed in.
-    public func read(keys: [CacheKey]) -> [Data] {
-        do {
-            let query = Self.storageTable.select(Self.expressions.dataRow)
-                .where(keys.map(\.rawValue).contains(Self.expressions.keyRow))
-                .limit(keys.count)
+    public func read(keys: [CacheKey]) async throws -> [Data] {
+        let query = Self.storageTable.select(Self.expressions.dataRow)
+            .where(keys.map(\.rawValue).contains(Self.expressions.keyRow))
+            .limit(keys.count)
 
-            return try self.connection.prepare(query)
-                .map({ $0[Self.expressions.dataRow] })
-        } catch {
-            return []
-        }
+        return try self.connection.prepareRowIterator(query)
+            .map({ try $0.get(Self.expressions.dataRow) })
     }
 
     /// Reads `Data` from disk based on the associated ``CacheKey``.
@@ -153,24 +146,23 @@ public actor SQLiteStorageEngine: StorageEngine {
     ///   - keys: A `[CacheKey]` for matching multiple `Data` items.
     /// - Returns: An array of `[(CacheKey, Data)]` if the `CacheKey`s exist,
     /// and an empty array if there are no `Data` items matching the `keys` passed in.
-    public func readDataAndKeys(keys: [CacheKey]) -> [(key: CacheKey, data: Data)] {
+    public func readDataAndKeys(keys: [CacheKey]) throws -> [(key: CacheKey, data: Data)] {
         let query = Self.storageTable.select(Self.expressions.keyRow, Self.expressions.dataRow)
             .where(keys.map(\.rawValue).contains(Self.expressions.keyRow))
             .limit(keys.count)
 
-        do {
-            return try self.connection.prepare(query)
-                .map({ (key: CacheKey(verbatim: $0[Self.expressions.keyRow]), data: $0[Self.expressions.dataRow]) })
-        } catch {
-            return []
-        }
+        return try self.connection.prepareRowIterator(query).map({ row in
+            (key: CacheKey(verbatim: try row.get(Self.expressions.keyRow)),
+             data: try row.get(Self.expressions.dataRow))
+        })
     }
 
     /// Reads all the `[Data]` located in the database.
     /// - Returns: An array of the `[Data]` contained in the database.
-    public func readAllData() -> [Data] {
-        let allKeys = self.allKeys()
-        return self.read(keys: allKeys)
+    public func readAllData() async throws -> [Data] {
+        let query = Self.storageTable.select(Self.expressions.dataRow)
+        return try self.connection.prepareRowIterator(query)
+            .map({ try $0.get(Self.expressions.dataRow) })
     }
 
     /// Reads all the `Data` located in the database and returns an array
@@ -182,9 +174,13 @@ public actor SQLiteStorageEngine: StorageEngine {
     /// to know which ``CacheKey`` led to a piece of `Data` being retrieved
     /// you can use ``readAllData()`` instead.
     /// - Returns: An array of the `[Data]` and it's associated ``CacheKey``s.
-    public func readAllDataAndKeys() -> [(key: CacheKey, data: Data)] {
-        let allKeys = self.allKeys()
-        return self.readDataAndKeys(keys: allKeys)
+    public func readAllDataAndKeys() async throws -> [(key: CacheKey, data: Data)] {
+        let query = Self.storageTable.select(Self.expressions.keyRow, Self.expressions.dataRow)
+
+        return try self.connection.prepareRowIterator(query).map({ row in
+            (key: CacheKey(verbatim: try row.get(Self.expressions.keyRow)),
+             data: try row.get(Self.expressions.dataRow))
+        })
     }
 
     /// Removes `Data` from disk based on the associated ``CacheKey``.
@@ -221,100 +217,76 @@ public actor SQLiteStorageEngine: StorageEngine {
     /// Checks whether a value with a key is persisted.
     /// - Parameter key: The key to for existence.
     /// - Returns: If the key exists the function returns true, false if it does not.
-    public func keyExists(_ key: CacheKey) -> Bool {
-        do {
-            let query = Self.storageTable
-                .select(Self.expressions.keyRow)
-                .filter(Self.expressions.keyRow == key.rawValue)
-                .limit(1)
+    public func keyExists(_ key: CacheKey) throws -> Bool {
+        let query = Self.storageTable
+            .select(Self.expressions.keyRow)
+            .filter(Self.expressions.keyRow == key.rawValue)
+            .limit(1)
 
-            return try self.connection.pluck(query)?[Self.expressions.keyRow] != nil
-        } catch {
-            return false
-        }
+        return try self.connection.pluck(query) != nil
     }
     
     /// Filters the provided keys to return only the ones that exist in the engine
     /// - Parameter keys: The list of keys to check for existence.
     /// - Returns: An array of keys that exist. This value is always a subset of the `keys` passed in.
-    public func keysExist(_ keys: [CacheKey]) async -> [CacheKey] {
-        do {
-            let rawKeys = keys.map(\.rawValue)
-            
-            let query = Self.storageTable
-                .select(Self.expressions.keyRow)
-                .filter(rawKeys.contains(Self.expressions.keyRow))
-            
-            return try self.connection.prepare(query)
-                .map({ CacheKey(verbatim: $0[Self.expressions.keyRow]) })
-        } catch {
-            return []
-        }
+    public func keysExist(_ keys: [CacheKey]) async throws -> [CacheKey] {
+        let query = Self.storageTable
+            .select(Self.expressions.keyRow)
+            .filter(keys.map(\.rawValue).contains(Self.expressions.keyRow))
+
+        return try self.connection.prepareRowIterator(query)
+            .map({ CacheKey(verbatim: try $0.get(Self.expressions.keyRow)) })
     }
 
     /// Iterates through the database to find the total number of `Data` items.
     /// - Returns: The file/key count.
-    public func keyCount() -> Int {
-        do {
-            return try self.connection.scalar(
-                Self.storageTable.select(
-                    Self.expressions.keyRow.distinct.count
-                )
+    public func keyCount() async throws -> Int {
+        return try self.connection.scalar(
+            Self.storageTable.select(
+                Self.expressions.keyRow.distinct.count
             )
-        } catch {
-            return 0
-        }
+        )
     }
 
     /// Iterates through the database to find all of the keys.
     /// - Returns: An array of the keys contained in a directory.
-    public func allKeys() -> [CacheKey] {
+    public func allKeys() throws -> [CacheKey] {
         let query = Self.storageTable.select(Self.expressions.keyRow)
-        do {
-            return try self.connection.prepare(query)
-                .map({ CacheKey(verbatim: $0[Self.expressions.keyRow]) })
-        } catch {
-            return []
-        }
+        return try self.connection.prepareRowIterator(query)
+            .map({ CacheKey(verbatim: try $0.get(Self.expressions.keyRow)) })
     }
 
     /// Returns the date of creation for the `Data` item matching the ``CacheKey``, if it exists.
     /// - Parameters:
     ///   - key: A ``CacheKey`` for matching `Data`.
     /// - Returns: The creation date of the `Data` on disk if it exists, nil if there is no `Data` stored for the ``CacheKey``.
-    public func createdAt(key: CacheKey) -> Date? {
-        do {
-            let query = Self.storageTable
-                .select(Self.expressions.createdAtRow)
-                .filter(Self.expressions.keyRow == key.rawValue)
-                .limit(1)
+    public func createdAt(key: CacheKey) throws -> Date? {
+        let query = Self.storageTable
+            .select(Self.expressions.createdAtRow)
+            .filter(Self.expressions.keyRow == key.rawValue)
+            .limit(1)
 
-            return try self.connection.pluck(query)?[Self.expressions.createdAtRow]
-        } catch {
-            return nil
-        }
+        return try self.connection.pluck(query)?.get(Self.expressions.createdAtRow)
     }
 
     /// Returns the modification date for the `Data` item matching the ``CacheKey``, if it exists.
     /// - Parameters:
     ///   - key: A ``CacheKey`` for matching `Data`.
     /// - Returns: The modification date of the `Data` on disk if it exists, nil if there is no `Data` stored for the ``CacheKey``.
-    public func updatedAt(key: CacheKey) -> Date? {
-        do {
-            let query = Self.storageTable
-                .select(Self.expressions.updatedAtRow)
-                .filter(Self.expressions.keyRow == key.rawValue)
-                .limit(1)
+    public func updatedAt(key: CacheKey) throws -> Date? {
+        let query = Self.storageTable
+            .select(Self.expressions.updatedAtRow)
+            .filter(Self.expressions.keyRow == key.rawValue)
+            .limit(1)
 
-            return try self.connection.pluck(query)?[Self.expressions.updatedAtRow]
-        } catch {
-            return nil
-        }
+        return try self.connection.pluck(query)?.get(Self.expressions.updatedAtRow)
     }
 }
 
 private extension SQLiteStorageEngine {
-    static let storageTable = Table("data")
+    static var storageTable: Table {
+        Table("data")
+    }
 }
 
 private extension SQLiteStorageEngine {
