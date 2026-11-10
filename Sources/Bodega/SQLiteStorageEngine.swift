@@ -160,8 +160,9 @@ public actor SQLiteStorageEngine: StorageEngine {
     /// Reads all the `[Data]` located in the database.
     /// - Returns: An array of the `[Data]` contained in the database.
     public func readAllData() async throws -> [Data] {
-        let allKeys = try self.allKeys()
-        return try await self.read(keys: allKeys)
+        let query = Self.storageTable.select(Self.expressions.dataRow)
+        return try self.connection.prepareRowIterator(query)
+            .map({ try $0.get(Self.expressions.dataRow) })
     }
 
     /// Reads all the `Data` located in the database and returns an array
@@ -174,8 +175,12 @@ public actor SQLiteStorageEngine: StorageEngine {
     /// you can use ``readAllData()`` instead.
     /// - Returns: An array of the `[Data]` and it's associated ``CacheKey``s.
     public func readAllDataAndKeys() async throws -> [(key: CacheKey, data: Data)] {
-        let allKeys = try self.allKeys()
-        return try self.readDataAndKeys(keys: allKeys)
+        let query = Self.storageTable.select(Self.expressions.keyRow, Self.expressions.dataRow)
+
+        return try self.connection.prepareRowIterator(query).map({ row in
+            (key: CacheKey(verbatim: try row.get(Self.expressions.keyRow)),
+             data: try row.get(Self.expressions.dataRow))
+        })
     }
 
     /// Removes `Data` from disk based on the associated ``CacheKey``.

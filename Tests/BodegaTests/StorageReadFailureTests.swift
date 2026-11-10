@@ -1,4 +1,5 @@
 import SQLite
+import SQLite3
 import XCTest
 @testable import Bodega
 
@@ -25,6 +26,37 @@ final class StorageReadFailureTests: XCTestCase {
 		await self.assertThrows("ObjectStorage.object", operation: { _ = try await objects.object(forKey: key) })
 		await self.assertThrows("ObjectStorage.allObjects", operation: { _ = try await objects.allObjects() })
 		await self.assertThrows("ObjectStorage.allObjectsAndKeys", operation: { _ = try await objects.allObjectsAndKeys() })
+	}
+
+	func testSQLiteFullReadsExceedTheSQLParameterLimit() async throws {
+		let directory = FileManager.Directory.temporary(appendingPath: "SQLiteFullReads-\(UUID())")
+		defer { try? FileManager.default.removeItem(at: directory.url) }
+
+		let engine = try XCTUnwrap(SQLiteStorageEngine(directory: directory))
+		let connection = try Connection(directory.url.appendingPathComponent("data.sqlite3").path)
+		let rowCount = Int(sqlite3_limit(connection.handle, SQLITE_LIMIT_VARIABLE_NUMBER, -1)) + 1
+		let insert = try connection.prepare("INSERT INTO data (key, value) VALUES (?, ?)")
+
+		try connection.transaction(block: {
+			for index in 0..<rowCount {
+				try insert.run(String(index), Blob(bytes: Array(String(index).utf8)))
+			}
+		})
+
+		// Exercise both concrete and protocol dispatch: an async default must not
+		// replace the full-table query with an IN clause containing every key.
+		let concreteRecords = try await engine.readAllDataAndKeys()
+		let storage: any StorageEngine = engine
+		let values = try await storage.readAllData()
+		let records = try await storage.readAllDataAndKeys()
+		let objects = ObjectStorage<Int>(storage: engine)
+		let allObjects = try await objects.allObjects()
+		let keyedObjects = try await objects.allObjectsAndKeys()
+		XCTAssertEqual(concreteRecords.count, rowCount)
+		XCTAssertEqual(values.count, rowCount)
+		XCTAssertEqual(records.count, rowCount)
+		XCTAssertEqual(Set(allObjects), Set(0..<rowCount))
+		XCTAssertEqual(Set(keyedObjects.map(\.object)), Set(0..<rowCount))
 	}
 
 	func testDiskMissingDirectoryDiffersFromInvalidStoragePath() async throws {

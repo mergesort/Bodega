@@ -94,8 +94,8 @@ public actor ObjectStorage<Object: Codable> {
     /// Reads all `[Object]` objects.
     /// - Returns: An array of `[Object]`s contained in a directory.
     public func allObjects() async throws -> [Object] {
-        let allKeys = try await self.allKeys()
-        return try await self.objects(forKeys: allKeys)
+        let dataItems = try await self.storage.readAllData()
+        return try dataItems.map({ try self.decoder.decode(Object.self, from: $0) })
     }
 
     /// Reads all of the objects and returns an array
@@ -108,8 +108,8 @@ public actor ObjectStorage<Object: Codable> {
     /// you can use ``allObjects()`` instead.
     /// - Returns: An array of `Object`s and it's associated ``CacheKey``s contained in a directory.
     public func allObjectsAndKeys() async throws -> [(key: CacheKey, object: Object)] {
-        let allKeys = try await self.allKeys()
-        return try await self.objectsAndKeys(keys: allKeys)
+        let records = try await self.storage.readAllDataAndKeys()
+        return try records.map({ (key: $0.key, object: try self.decoder.decode(Object.self, from: $0.data)) })
     }
 
     /// Removes an `Object` based on the the associated ``CacheKey``.

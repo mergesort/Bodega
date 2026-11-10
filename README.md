@@ -191,3 +191,5 @@ Bodega is a labor of love to help developers build better apps, making it easier
 ### Read failures
 
 Read and query APIs throw when storage cannot be read. A missing key still returns `nil` or `false`, and a successful query with no matching records returns an empty array (or a count of zero). `ObjectStorage` also throws decoding errors instead of treating invalid data as absent. Callers that intentionally treat failures as cache misses can explicitly opt into `try?` at their call site.
+
+`readAllData()` and `readAllDataAndKeys()` read the complete SQLite table directly, avoiding the SQL parameter limit of a query containing every stored key.
