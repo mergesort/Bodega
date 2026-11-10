@@ -60,7 +60,7 @@ As with any other ``StorageEngine`` you'll then be able to read or write data to
 try await self.imagesStorage.write(data, key: CacheKey("red-panda.jpg"))
 
 // Read data from disk
-await self.imagesStorage.read(key: CacheKey("red-panda.jpg"))
+try await self.imagesStorage.read(key: CacheKey("red-panda.jpg"))
 ```
 
 The ``DiskStorageEngine`` prioritizes simplicity over speed, focusing on ease of use and debugging. The ``DiskStorageEngine`` will write a one file for every object you save to the ``DiskStorageEngine``. That makes it easy to inspect and debug any objects you're saving, with a downside of poor performance as your ``DiskStorageEngine`` grows.

@@ -14,6 +14,7 @@ import Foundation
 /// If performance is important ``Bodega`` ships ``SQLiteStorageEngine``, and that is the recommended
 /// default ``StorageEngine``. If you have your own persistence layer such as Realm, Core Data, etc,
 /// you can easily build your own ``StorageEngine`` to plug into ``ObjectStorage``.
+/// Reads throw on filesystem failures. Missing files and an absent storage directory are empty storage.
 public actor DiskStorageEngine: StorageEngine {
     /// A directory on the filesystem where your ``StorageEngine``s data will be stored.
     private let directory: FileManager.Directory
@@ -55,8 +56,12 @@ public actor DiskStorageEngine: StorageEngine {
     /// - Parameters:
     ///   - key: A ``CacheKey`` for matching `Data` to a location on disk.
     /// - Returns: The `Data` stored on disk if it exists, nil if there is no `Data` stored for the `CacheKey`.
-    public func read(key: CacheKey) -> Data? {
-        return try? Data(contentsOf: self.concatenatedPath(key: key))
+    public func read(key: CacheKey) throws -> Data? {
+        do {
+            return try Data(contentsOf: self.concatenatedPath(key: key))
+        } catch let error where Self.isMissingFile(error) {
+            return nil
+        }
     }
 
     /// Reads `Data` from disk based on the associated array of ``CacheKey``s provided as a parameter
@@ -71,11 +76,11 @@ public actor DiskStorageEngine: StorageEngine {
     ///   - keys: A `[CacheKey]` for matching multiple `Data` items.
     /// - Returns: An array of `[(CacheKey, Data)]` read from disk if the ``CacheKey``s exist,
     /// and an empty array if there are no `Data` items matching the `keys` passed in.
-    public func readDataAndKeys(keys: [CacheKey]) async -> [(key: CacheKey, data: Data)] {
+    public func readDataAndKeys(keys: [CacheKey]) async throws -> [(key: CacheKey, data: Data)] {
         var dataAndKeys: [(key: CacheKey, data: Data)] = []
 
         for key in keys {
-            if let data = self.read(key: key) {
+            if let data = try self.read(key: key) {
                 dataAndKeys.append((key, data))
             }
         }
@@ -85,9 +90,9 @@ public actor DiskStorageEngine: StorageEngine {
 
     /// Reads all the `[Data]` located in the `directory`.
     /// - Returns: An array of the `[Data]` contained on disk.
-    public func readAllData() async -> [Data] {
-        let allKeys = self.allKeys()
-        return await self.read(keys: allKeys)
+    public func readAllData() async throws -> [Data] {
+        let allKeys = try self.allKeys()
+        return try await self.read(keys: allKeys)
     }
 
     /// Reads all the `Data` located in the `directory` and returns an array
@@ -99,9 +104,9 @@ public actor DiskStorageEngine: StorageEngine {
     /// to know which ``CacheKey`` led to a piece of `Data` being retrieved
     /// you can use ``readAllData()`` instead.
     /// - Returns: An array of the `[Data]` and it's associated `CacheKey`s contained in a directory.
-    public func readAllDataAndKeys() async -> [(key: CacheKey, data: Data)] {
-        let allKeys = self.allKeys()
-        return await self.readDataAndKeys(keys: allKeys)
+    public func readAllDataAndKeys() async throws -> [(key: CacheKey, data: Data)] {
+        let allKeys = try self.allKeys()
+        return try await self.readDataAndKeys(keys: allKeys)
     }
 
     /// Removes `Data` from disk based on the associated ``CacheKey``.
@@ -133,26 +138,30 @@ public actor DiskStorageEngine: StorageEngine {
     /// This implementation provides `O(1)` checking for the key's existence.
     /// - Parameter key: The key to check for existence.
     /// - Returns: If the key exists the function returns true, false if it does not.
-    public func keyExists(_ key: CacheKey) -> Bool {
-        let fileURL = self.concatenatedPath(key: key)
-        return Self.fileExists(atURL: fileURL)
+    public func keyExists(_ key: CacheKey) throws -> Bool {
+        do {
+            let values = try self.concatenatedPath(key: key).resourceValues(forKeys: [.isDirectoryKey])
+            return values.isDirectory == false
+        } catch let error where Self.isMissingFile(error) {
+            return false
+        }
     }
 
     /// Iterates through a directory to find the total number of `Data` items.
     /// - Returns: The file/key count.
-    public func keyCount() -> Int {
-        return self.allKeys().count
+    public func keyCount() throws -> Int {
+        return try self.allKeys().count
     }
 
     /// Iterates through a `directory` to find all of the keys.
     /// - Returns: An array of the keys contained in a directory.
-    public func allKeys() -> [CacheKey] {
+    public func allKeys() throws -> [CacheKey] {
         do {
             let directoryContents = try FileManager.default.contentsOfDirectory(at: self.directory.url, includingPropertiesForKeys: nil)
             let fileOnlyKeys = directoryContents.lazy.filter({ !$0.hasDirectoryPath }).map(\.lastPathComponent)
 
             return fileOnlyKeys.map(CacheKey.init(verbatim:))
-        } catch {
+        } catch let error where Self.isMissingFile(error) {
             return []
         }
     }
@@ -161,27 +170,39 @@ public actor DiskStorageEngine: StorageEngine {
     /// - Parameters:
     ///   - key: A ``CacheKey`` for matching `Data` to a location on disk.
     /// - Returns: The creation date of the `Data` on disk if it exists, nil if there is no `Data` stored for the `CacheKey`.
-    public func createdAt(key: CacheKey) -> Date? {
-        return try? self.concatenatedPath(key: key)
-            .resourceValues(forKeys: [.creationDateKey]).creationDate
+    public func createdAt(key: CacheKey) throws -> Date? {
+        do {
+            return try self.concatenatedPath(key: key)
+                .resourceValues(forKeys: [.creationDateKey]).creationDate
+        } catch let error where Self.isMissingFile(error) {
+            return nil
+        }
     }
 
     /// Returns the updatedAt date for the file represented by the ``CacheKey``, if it exists.
     /// - Parameters:
     ///   - key: A ``CacheKey`` for matching `Data` to a location on disk.
     /// - Returns: The updatedAt date of the `Data` on disk if it exists, nil if there is no `Data` stored for the ``CacheKey``.
-    public func updatedAt(key: CacheKey) -> Date? {
-        return try? self.concatenatedPath(key: key)
-            .resourceValues(forKeys: [.contentModificationDateKey]).contentModificationDate
+    public func updatedAt(key: CacheKey) throws -> Date? {
+        do {
+            return try self.concatenatedPath(key: key)
+                .resourceValues(forKeys: [.contentModificationDateKey]).contentModificationDate
+        } catch let error where Self.isMissingFile(error) {
+            return nil
+        }
     }
 
     /// Returns the last access date of the file for the ``CacheKey``, if it exists.
     /// - Parameters:
     ///   - key: A ``CacheKey`` for matching `Data` to a location on disk.
     /// - Returns: The last access date of the `Data` on disk if it exists, nil if there is no `Data` stored for the ``CacheKey``.
-    public func lastAccessed(key: CacheKey) -> Date? {
-        return try? self.concatenatedPath(key: key)
-            .resourceValues(forKeys: [.contentAccessDateKey]).contentAccessDate
+    public func lastAccessed(key: CacheKey) throws -> Date? {
+        do {
+            return try self.concatenatedPath(key: key)
+                .resourceValues(forKeys: [.contentAccessDateKey]).contentAccessDate
+        } catch let error where Self.isMissingFile(error) {
+            return nil
+        }
     }
 }
 
@@ -201,11 +222,10 @@ private extension DiskStorageEngine {
         return FileManager.default.fileExists(atPath: url.path, isDirectory: &isDirectory)
     }
     
-    static func fileExists(atURL url: URL) -> Bool {
-        var isDirectory: ObjCBool = true
-
-        let exists = FileManager.default.fileExists(atPath: url.path, isDirectory: &isDirectory)
-        return exists == true && isDirectory.boolValue == false
+    static func isMissingFile(_ error: any Error) -> Bool {
+        let error = error as NSError
+        return error.domain == NSCocoaErrorDomain
+            && (error.code == CocoaError.fileNoSuchFile.rawValue || error.code == CocoaError.fileReadNoSuchFile.rawValue)
     }
 
     func concatenatedPath(key: CacheKey) -> URL {

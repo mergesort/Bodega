@@ -16,18 +16,18 @@ final class SQLiteStorageEngineBackedObjectStorageTests: ObjectStorageTests {
     // and a new file with a new createdAt is created.
     func testCreatedAtDate() async throws {
         // Make sure the createdAt is nil if the key hasn't been stored
-        let initialCreatedAt = await storage.createdAt(forKey: Self.testCacheKey)
+        let initialCreatedAt = try await storage.createdAt(forKey: Self.testCacheKey)
         XCTAssertNil(initialCreatedAt)
 
         // Make sure the createdAt is in the right range if it has been stored
         try await storage.store(Self.testObject, forKey: Self.testCacheKey)
-        let firstWriteDate = await storage.createdAt(forKey: Self.testCacheKey)
+        let firstWriteDate = try await storage.createdAt(forKey: Self.testCacheKey)
 
         try await Task.sleep(nanoseconds: 1_000_000)
 
         // Make sure the createdAt date is not updated when the data is re-written
         try await storage.store(Self.testObject, forKey: Self.testCacheKey)
-        let secondWriteDate = await storage.createdAt(forKey: Self.testCacheKey)
+        let secondWriteDate = try await storage.createdAt(forKey: Self.testCacheKey)
 
         XCTAssertEqual(firstWriteDate, secondWriteDate)
     }
@@ -47,18 +47,18 @@ final class DiskStorageEngineBackedObjectStorageTests: ObjectStorageTests {
     // Since we are overwriting a file, a new file with a new createdAt is created.
     func testCreatedAtDate() async throws {
         // Make sure the createdAt is nil if the key hasn't been stored
-        let initialCreatedAt = await storage.createdAt(forKey: Self.testCacheKey)
+        let initialCreatedAt = try await storage.createdAt(forKey: Self.testCacheKey)
         XCTAssertNil(initialCreatedAt)
 
         // Make sure the createdAt is in the right range if it has been stored
         try await storage.store(Self.testObject, forKey: Self.testCacheKey)
-        let firstWriteDate = await storage.createdAt(forKey: Self.testCacheKey)
+        let firstWriteDate = try await storage.createdAt(forKey: Self.testCacheKey)
 
         try await Task.sleep(nanoseconds: 1_000_000)
 
         // Make sure the createdAt date is not updated when the data is re-written
         try await storage.store(Self.testObject, forKey: Self.testCacheKey)
-        let secondWriteDate = await storage.createdAt(forKey: Self.testCacheKey)
+        let secondWriteDate = try await storage.createdAt(forKey: Self.testCacheKey)
 
         // DiskStorageEngine will overwrite the original data so unlike other engines
         // a new `createdAt` will be generated on write.
@@ -86,14 +86,14 @@ class ObjectStorageTests: XCTestCase {
 
     func testWritingObjectSucceeds() async throws {
         try await storage.store(Self.testObject, forKey: Self.testCacheKey)
-        let readObject: CodableObject? = await storage.object(forKey: Self.testCacheKey)
+        let readObject: CodableObject? = try await storage.object(forKey: Self.testCacheKey)
 
         XCTAssertEqual(readObject, Self.testObject)
 
         // Test overwriting an object
         let updatedTestObject = CodableObject(value: "updated-value")
         try await storage.store(updatedTestObject, forKey: Self.testCacheKey)
-        let updatedObject: CodableObject? = await storage.object(forKey: Self.testCacheKey)
+        let updatedObject: CodableObject? = try await storage.object(forKey: Self.testCacheKey)
 
         XCTAssertNotEqual(readObject, updatedObject)
     }
@@ -101,10 +101,10 @@ class ObjectStorageTests: XCTestCase {
     func testWritingObjectsAndKeysSucceeds() async throws {
         try await storage.store(Self.storedKeysAndObjects)
 
-        let objectCount = await storage.keyCount()
+        let objectCount = try await storage.keyCount()
         XCTAssertEqual(objectCount, 4)
 
-        let readKeysAndObjects: [(key: CacheKey, object: CodableObject)] = await storage.allObjectsAndKeys()
+        let readKeysAndObjects: [(key: CacheKey, object: CodableObject)] = try await storage.allObjectsAndKeys()
             .sorted(by: { $0.object.value < $1.object.value })
 
         XCTAssertEqual(Self.storedKeysAndObjects.map(\.key), readKeysAndObjects.map(\.key))
@@ -114,17 +114,17 @@ class ObjectStorageTests: XCTestCase {
     func testReadingObjectSucceeds() async throws {
         // Read one object
         try await storage.store(Self.testObject, forKey: Self.testCacheKey)
-        let readObject: CodableObject? = await storage.object(forKey: Self.testCacheKey)
+        let readObject: CodableObject? = try await storage.object(forKey: Self.testCacheKey)
         XCTAssertEqual(readObject, Self.testObject)
     }
 
     func testReadingArrayOfObjectsSucceds() async throws {
         try await self.writeObjectsToDisk(count: 10)
-        let keyCount = await storage.keyCount()
+        let keyCount = try await storage.keyCount()
         XCTAssertEqual(keyCount, 10)
 
         // Read an array of objects
-        let objects: [CodableObject] = await storage.objects(forKeys: [CacheKey(verbatim: "0"), CacheKey(verbatim: "1")])
+        let objects: [CodableObject] = try await storage.objects(forKeys: [CacheKey(verbatim: "0"), CacheKey(verbatim: "1")])
         let objectValues = objects.map(\.value)
 
         XCTAssertEqual(objectValues, [
@@ -136,9 +136,9 @@ class ObjectStorageTests: XCTestCase {
     func testReadingObjectsAndKeysSucceeds() async throws {
         try await self.writeObjectsToDisk(count: 10)
 
-        let allKeys = await storage.allKeys().sorted(by: { $0.value < $1.value })
+        let allKeys = try await storage.allKeys().sorted(by: { $0.value < $1.value })
         let lastTwoKeys = Array(allKeys.suffix(2))
-        let lastTwoCacheKeysAndObjects: [(key: CacheKey, object: CodableObject)] = await storage.objectsAndKeys(keys: lastTwoKeys)
+        let lastTwoCacheKeysAndObjects: [(key: CacheKey, object: CodableObject)] = try await storage.objectsAndKeys(keys: lastTwoKeys)
 
         // Testing that the keys returned are correct
         XCTAssertEqual(lastTwoCacheKeysAndObjects.map(\.key), [
@@ -155,11 +155,11 @@ class ObjectStorageTests: XCTestCase {
 
     func testReadingObjectsAndNonExistentKeys() async throws {
         try await self.writeObjectsToDisk(count: 5)
-        let allDataAndKeys = await storage.allObjectsAndKeys()
+        let allDataAndKeys = try await storage.allObjectsAndKeys()
             .sorted(by: { $0.key.value > $1.key.value })
         
         let goodAndBadKeys = (0 ..< 10).reversed().map({ CacheKey(verbatim: "\($0)") })
-        let validObjectsAndKeys = await storage.objectsAndKeys(keys: goodAndBadKeys)
+        let validObjectsAndKeys = try await storage.objectsAndKeys(keys: goodAndBadKeys)
             .sorted(by: { $0.key.value > $1.key.value })
         
         XCTAssertEqual(allDataAndKeys.map(\.key), validObjectsAndKeys.map(\.key))
@@ -169,7 +169,7 @@ class ObjectStorageTests: XCTestCase {
     func testReadingAllObjectsSucceeds() async throws {
         try await self.writeObjectsToDisk(count: 10)
 
-        let allObjects: [CodableObject] = await storage.allObjects().sorted(by: { $0.value < $1.value })
+        let allObjects: [CodableObject] = try await storage.allObjects().sorted(by: { $0.value < $1.value })
 
         XCTAssertEqual(allObjects.count, 10)
         XCTAssertEqual([
@@ -188,7 +188,7 @@ class ObjectStorageTests: XCTestCase {
     func testReadingAllObjectsAndKeysSucceeds() async throws {
         try await self.writeObjectsToDisk(count: 10)
 
-        let allKeysAndObjects: [(key: CacheKey, object: CodableObject)] = await storage.allObjectsAndKeys()
+        let allKeysAndObjects: [(key: CacheKey, object: CodableObject)] = try await storage.allObjectsAndKeys()
         XCTAssertEqual(allKeysAndObjects.count, 10)
 
         let keysDerivedFromKeysAndObjects = allKeysAndObjects.map(\.key)
@@ -219,19 +219,19 @@ class ObjectStorageTests: XCTestCase {
     }
 
     func testReadingMissingObject() async throws {
-        let readObject: CodableObject? = await storage.object(forKey: Self.testCacheKey)
+        let readObject: CodableObject? = try await storage.object(forKey: Self.testCacheKey)
         XCTAssertNil(readObject)
     }
 
     func testRemoveObjectSucceeds() async throws {
         // Test removing an object based on it's key
         try await storage.store(Self.testObject, forKey: Self.testCacheKey)
-        let readObject: CodableObject? = await storage.object(forKey: Self.testCacheKey)
+        let readObject: CodableObject? = try await storage.object(forKey: Self.testCacheKey)
 
         XCTAssertNotNil(readObject)
 
         try await storage.removeObject(forKey: Self.testCacheKey)
-        let updatedObject: CodableObject? = await storage.object(forKey: Self.testCacheKey)
+        let updatedObject: CodableObject? = try await storage.object(forKey: Self.testCacheKey)
 
         XCTAssertNil(updatedObject)
 
@@ -245,7 +245,7 @@ class ObjectStorageTests: XCTestCase {
             storedKeysAndData[2].key,
         ])
 
-        let allData: [(key: CacheKey, object: CodableObject)] = await storage.allObjectsAndKeys()
+        let allData: [(key: CacheKey, object: CodableObject)] = try await storage.allObjectsAndKeys()
         XCTAssertEqual(allData[0].key, storedKeysAndData[3].key)
         XCTAssertEqual(allData[0].object, storedKeysAndData[3].object)
 
@@ -255,38 +255,38 @@ class ObjectStorageTests: XCTestCase {
         try await storage.store(Self.testObject, forKey: Self.testCacheKey)
         try await storage.removeObject(forKey: CacheKey("alternative-test-key"))
 
-        let readObject: CodableObject? = await storage.object(forKey: Self.testCacheKey)
+        let readObject: CodableObject? = try await storage.object(forKey: Self.testCacheKey)
         XCTAssertEqual(readObject, Self.testObject)
     }
 
     func testRemoveAllObjects() async throws {
         try await storage.store(Self.testObject, forKey: Self.testCacheKey)
-        let keyCount = await storage.allKeys().count
+        let keyCount = try await storage.allKeys().count
         XCTAssertEqual(keyCount, 1)
 
         try await storage.removeAllObjects()
-        let updatedKeyCount = await storage.allKeys().count
+        let updatedKeyCount = try await storage.allKeys().count
         XCTAssertEqual(updatedKeyCount, 0)
     }
 
     func testKeyCount() async throws {
-        let keyCount = await storage.keyCount()
+        let keyCount = try await storage.keyCount()
 
         XCTAssertEqual(keyCount, 0)
 
         try await self.writeObjectsToDisk(count: 10)
-        let updatedKeyCount = await storage.keyCount()
+        let updatedKeyCount = try await storage.keyCount()
         XCTAssertEqual(updatedKeyCount, 10)
 
         // Overwriting an object in the same cache keys and ensuring that the count doesn't change
         try await self.writeObjectsToDisk(count: 10)
-        let overwrittenKeyCount = await storage.keyCount()
+        let overwrittenKeyCount = try await storage.keyCount()
         XCTAssertEqual(overwrittenKeyCount, 10)
     }
 
     func testAllKeys() async throws {
         try await self.writeObjectsToDisk(count: 10)
-        let allKeys = await storage.allKeys().sorted(by: { $0.value < $1.value })
+        let allKeys = try await storage.allKeys().sorted(by: { $0.value < $1.value })
 
         XCTAssertEqual(allKeys[0].value, "0")
         XCTAssertEqual(allKeys[3].value, "3")
@@ -295,18 +295,18 @@ class ObjectStorageTests: XCTestCase {
 
     func testUpdatedAtDate() async throws {
         // Make sure the updatedAt is nil if the key hasn't been stored
-        let initialUpdatedAt = await storage.updatedAt(forKey: Self.testCacheKey)
+        let initialUpdatedAt = try await storage.updatedAt(forKey: Self.testCacheKey)
         XCTAssertNil(initialUpdatedAt)
 
         // Make sure the updatedAt is in the right range if it has been stored
         try await storage.store(Self.testObject, forKey: Self.testCacheKey)
-        let firstWriteDate = await storage.updatedAt(forKey: Self.testCacheKey)
+        let firstWriteDate = try await storage.updatedAt(forKey: Self.testCacheKey)
 
         try await Task.sleep(nanoseconds: 1_000_000)
 
         // Make sure the updatedAt date is updated when the data is re-written
         try await storage.store(Self.testObject, forKey: Self.testCacheKey)
-        let secondWriteDate = await storage.updatedAt(forKey: Self.testCacheKey)
+        let secondWriteDate = try await storage.updatedAt(forKey: Self.testCacheKey)
 
         XCTAssertNotEqual(firstWriteDate, secondWriteDate)
     }

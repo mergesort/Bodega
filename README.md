@@ -53,7 +53,7 @@ let data = Data("Find out who you are. And do it on purpose. - Dolly Parton".utf
 try await storage.write(data, key: cacheKey)
 
 // Read data from disk
-let readData = await storage.read(key: cacheKey)
+let readData = try await storage.read(key: cacheKey)
 
 // Remove data from disk
 try await storage.remove(key: Self.testCacheKey)
@@ -112,13 +112,13 @@ let quote = Quote(
 try await storage.store(quote, forKey: cacheKey)
 
 // Read an object
-let readObject: Quote? = await storage.object(forKey: cacheKey)
+let readObject: Quote? = try await storage.object(forKey: cacheKey)
 
 // Grab all the keys, which at this point will be one key, `cacheKey`.
-let allKeys = await storage.allKeys()
+let allKeys = try await storage.allKeys()
 
 // Verify by calling `keyCount`, both key-related methods are also available on `DiskStorage`.
-await storage.keyCount()
+try await storage.keyCount()
 
 // Remove an object
 try await storage.removeObject(forKey: cacheKey)
@@ -187,3 +187,7 @@ Bodega is a labor of love to help developers build better apps, making it easier
 ---
 
 **Now that you're up to speed, *let's take this offline*** 📭
+
+### Read failures
+
+Read and query APIs throw when storage cannot be read. A missing key still returns `nil` or `false`, and a successful query with no matching records returns an empty array (or a count of zero). `ObjectStorage` also throws decoding errors instead of treating invalid data as absent. Callers that intentionally treat failures as cache misses can explicitly opt into `try?` at their call site.

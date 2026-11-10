@@ -12,6 +12,7 @@ import Foundation
 /// ```
 /// SQLiteStorageEngine(directory: .defaultStorageDirectory(appendingPath: "Assets"))
 /// ```
+/// Reads throw on storage and decoding failures; only absent records return nil or empty collections.
 public actor ObjectStorage<Object: Codable> {
     private let storage: StorageEngine
 
@@ -51,10 +52,10 @@ public actor ObjectStorage<Object: Codable> {
     /// - Parameters:
     ///   - key: A ``CacheKey`` for matching an `Object`.
     /// - Returns: The object stored if it exists, nil if there is no `Object` stored for the ``CacheKey``.
-    public func object(forKey key: CacheKey) async -> Object? {
-        guard let data = await storage.read(key: key) else { return nil }
+    public func object(forKey key: CacheKey) async throws -> Object? {
+        guard let data = try await storage.read(key: key) else { return nil }
 
-        return try? self.decoder.decode(Object.self, from: data)
+        return try self.decoder.decode(Object.self, from: data)
     }
 
     /// Reads `Object`s based on the associated array of ``CacheKey``s provided as a parameter.
@@ -62,14 +63,9 @@ public actor ObjectStorage<Object: Codable> {
     ///   - keys: A `[CacheKey]` for matching multiple `Object`s.
     /// - Returns: An array of `[Object]`s stored if the ``CacheKey``s exist,
     /// and an `[]` if there are no `Object`s matching the `keys` passed in.
-    public func objects(forKeys keys: [CacheKey]) async -> [Object] {
-        let dataItems = await storage.read(keys: keys)
-
-        do {
-            return try dataItems.map({ try self.decoder.decode(Object.self, from: $0) })
-        } catch {
-            return []
-        }
+    public func objects(forKeys keys: [CacheKey]) async throws -> [Object] {
+        let dataItems = try await self.storage.read(keys: keys)
+        return try dataItems.map({ try self.decoder.decode(Object.self, from: $0) })
     }
 
     /// Reads `Object`s based on the associated array of ``CacheKey``s provided as a parameter
@@ -83,11 +79,11 @@ public actor ObjectStorage<Object: Codable> {
     ///   - keys: A `[CacheKey]` for matching multiple `Object`s.
     /// - Returns: An array of `[(CacheKey, Object)]` read if it exists,
     /// and an empty array if there are no `Objects`s matching the `keys` passed in.
-    public func objectsAndKeys(keys: [CacheKey]) async -> [(key: CacheKey, object: Object)] {
+    public func objectsAndKeys(keys: [CacheKey]) async throws -> [(key: CacheKey, object: Object)] {
         var objectsAndKeys: [(key: CacheKey, object: Object)] = []
 
         for key in keys {
-            if let object = await self.object(forKey: key) {
+            if let object = try await self.object(forKey: key) {
                 objectsAndKeys.append((key, object))
             }
         }
@@ -97,9 +93,9 @@ public actor ObjectStorage<Object: Codable> {
 
     /// Reads all `[Object]` objects.
     /// - Returns: An array of `[Object]`s contained in a directory.
-    public func allObjects() async -> [Object] {
-        let allKeys = await self.allKeys()
-        return await self.objects(forKeys: allKeys)
+    public func allObjects() async throws -> [Object] {
+        let allKeys = try await self.allKeys()
+        return try await self.objects(forKeys: allKeys)
     }
 
     /// Reads all of the objects and returns an array
@@ -111,9 +107,9 @@ public actor ObjectStorage<Object: Codable> {
     /// don't need to know which ``CacheKey`` led to an `Object` being retrieved
     /// you can use ``allObjects()`` instead.
     /// - Returns: An array of `Object`s and it's associated ``CacheKey``s contained in a directory.
-    public func allObjectsAndKeys() async -> [(key: CacheKey, object: Object)] {
-        let allKeys = await self.allKeys()
-        return await self.objectsAndKeys(keys: allKeys)
+    public func allObjectsAndKeys() async throws -> [(key: CacheKey, object: Object)] {
+        let allKeys = try await self.allKeys()
+        return try await self.objectsAndKeys(keys: allKeys)
     }
 
     /// Removes an `Object` based on the the associated ``CacheKey``.
@@ -139,29 +135,29 @@ public actor ObjectStorage<Object: Codable> {
 
     /// Iterates through a directory to find the total number of objects.
     /// - Returns: The object/key count.
-    public func keyCount() async -> Int {
-        return await storage.keyCount()
+    public func keyCount() async throws -> Int {
+        return try await storage.keyCount()
     }
 
     /// Iterates through the ``ObjectStorage`` to find all of the `Object`s keys.
     /// - Returns: An array of the keys contained in a directory.
-    public func allKeys() async -> [CacheKey] {
-        return await storage.allKeys()
+    public func allKeys() async throws -> [CacheKey] {
+        return try await storage.allKeys()
     }
 
     /// Returns the date of creation for the object represented by the ``CacheKey``, if it exists.
     /// - Parameters:
     ///   - key: A ``CacheKey`` for matching an `Object`.
     /// - Returns: The creation date of the `Object` if it exists, nil if there is no `Object` stored for the ``CacheKey``.
-    public func createdAt(forKey key: CacheKey) async -> Date? {
-        return await storage.createdAt(key: key)
+    public func createdAt(forKey key: CacheKey) async throws -> Date? {
+        return try await storage.createdAt(key: key)
     }
 
     /// Returns the modification date for the object represented by the ``CacheKey``, if it exists.
     /// - Parameters:
     ///   - key: A ``CacheKey`` for matching an `Object`.
     /// - Returns: The modification date of the object if it exists, nil if there is no object stored for the ``CacheKey``.
-    public func updatedAt(forKey key: CacheKey) async -> Date? {
-        return await storage.updatedAt(key: key)
+    public func updatedAt(forKey key: CacheKey) async throws -> Date? {
+        return try await storage.updatedAt(key: key)
     }
 }
